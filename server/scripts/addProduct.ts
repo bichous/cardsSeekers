@@ -23,11 +23,20 @@ interface CardSearchResult {
   artist?: string;
 }
 
+interface ProductData {
+  name: string;
+  description: string;
+  images: string[];
+  metadata: Record<string, string>;
+  type: 'singles' | 'sealed';
+  category: string;
+}
+
 // APIs de búsqueda de cartas
 const POKEMON_API = 'https://api.pokemontcg.io/v2/cards';
 const YUGIOH_API = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
 
-async function searchPokemonProduct(query: string): Promise<any> {
+async function searchPokemonProduct(query: string): Promise<ProductData> {
   try {
     const response = await axios.get(POKEMON_API, {
       params: {
@@ -81,11 +90,11 @@ async function searchPokemonProduct(query: string): Promise<any> {
       category: 'Single Card'
     };
   } catch (error) {
-    throw new Error(`Error buscando en Pokémon API: ${error.message}`);
+    throw new Error(`Error buscando en Pokémon API: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
-async function searchYugiohProduct(query: string): Promise<any> {
+async function searchYugiohProduct(query: string): Promise<ProductData> {
   try {
     const response = await axios.get(YUGIOH_API, {
       params: {
@@ -115,7 +124,7 @@ async function searchYugiohProduct(query: string): Promise<any> {
       category: 'Single Card'
     };
   } catch (error) {
-    throw new Error(`Error buscando en Yu-Gi-Oh! API: ${error.message}`);
+    throw new Error(`Error buscando en Yu-Gi-Oh! API: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -192,7 +201,7 @@ async function addProduct(
 
     return product;
   } catch (error) {
-    console.error(`\n❌ Error: ${error.message}`);
+    console.error(`\n❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     throw error;
   } finally {
     await prisma.$disconnect();
@@ -220,12 +229,24 @@ Idiomas: español (default), inglés, japonés, portugués
 
   const [productName, priceStr, stockStr, franchise = 'pokemon', language = 'español'] = args;
 
+  // Validar franquicia
+  const validFranchises = ['pokemon', 'yugioh', 'onepiece'] as const;
+  const franchiseValue = validFranchises.includes(franchise as typeof validFranchises[number])
+    ? (franchise as 'pokemon' | 'yugioh' | 'onepiece')
+    : 'pokemon';
+
+  // Validar idioma
+  const validLanguages = ['español', 'inglés', 'japonés', 'portugués'] as const;
+  const languageValue = validLanguages.includes(language as typeof validLanguages[number])
+    ? (language as 'español' | 'inglés' | 'japonés' | 'portugués')
+    : 'español';
+
   await addProduct(
     productName,
     parseInt(priceStr),
     parseInt(stockStr),
-    franchise as any,
-    language as any
+    franchiseValue,
+    languageValue
   );
 }
 

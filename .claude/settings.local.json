@@ -4,7 +4,9 @@
       "Bash(npm install:*)",
       "Bash(npm run:*)",
       "Bash(ls /Users/bichous/Downloads/cardsSeekers/.env*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npx eslint:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
