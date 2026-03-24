@@ -22,19 +22,85 @@ import {
   IconButton,
   Box,
   Divider,
+  Image,
   useToast,
 } from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
-import { FiPlus, FiTrash2 } from 'react-icons/fi'
+import { FiPlus, FiTrash2, FiX } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext'
 import type { AdminProduct } from './ProductsPage'
 import { SinglesMetadataForm, type SinglesMeta } from './SinglesMetadataForm'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
+function ImageSection({
+  form,
+  set,
+  removeImage,
+}: {
+  form: typeof EMPTY_FORM
+  set: (field: keyof typeof EMPTY_FORM, value: string | boolean) => void
+  removeImage: (i: number) => void
+}) {
+  return (
+    <FormControl gridColumn="1 / -1" mt={4}>
+      <FormLabel fontSize="12px" color="gray.500">
+        URLs de imágenes
+        <Text as="span" color="gray.700" fontWeight={400} ml={2}>(una por línea)</Text>
+      </FormLabel>
+      <Textarea
+        bg="#0d0d0d" borderColor="#2a2a2a" color="white" rows={2}
+        fontFamily="mono" fontSize="12px" value={form.images}
+        onChange={(e) => set('images', e.target.value)}
+      />
+      {form.images.trim() && (
+        <HStack mt={2} spacing={2} flexWrap="wrap">
+          {form.images.split('\n').filter(Boolean).map((url, i) => (
+            <Box key={i} position="relative">
+              <Image
+                src={url}
+                alt={`preview ${i + 1}`}
+                h="80px"
+                w="auto"
+                maxW="70px"
+                objectFit="cover"
+                borderRadius="md"
+                border="1px solid #2a2a2a"
+                fallback={
+                  <Box h="80px" w="56px" bg="#1a1a1a" borderRadius="md"
+                    border="1px solid #2a2a2a" display="flex" alignItems="center" justifyContent="center">
+                    <Text fontSize="9px" color="gray.700">err</Text>
+                  </Box>
+                }
+              />
+              <IconButton
+                aria-label="Quitar imagen"
+                icon={<FiX size={10} />}
+                size="xs"
+                position="absolute"
+                top="2px"
+                right="2px"
+                minW="18px"
+                h="18px"
+                bg="blackAlpha.800"
+                color="white"
+                _hover={{ bg: 'red.600' }}
+                onClick={() => removeImage(i)}
+              />
+            </Box>
+          ))}
+        </HStack>
+      )}
+    </FormControl>
+  )
+}
+
+const CONDITIONS = ['NM', 'LP', 'MP', 'HP', 'Damaged']
+
 interface VariantForm {
   id?: string
   language: string
+  condition: string
   price: string
   originalPrice: string
   stock: string
@@ -60,6 +126,7 @@ const EMPTY_FORM = {
 
 const EMPTY_VARIANT: VariantForm = {
   language: 'español',
+  condition: 'NM',
   price: '',
   originalPrice: '',
   stock: '0',
@@ -72,7 +139,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
   const toast = useToast()
   const [form, setForm] = useState(EMPTY_FORM)
   const [variants, setVariants] = useState<VariantForm[]>([{ ...EMPTY_VARIANT }])
-  const [meta, setMeta] = useState<SinglesMeta>({ condition: 'NM' })
+  const [meta, setMeta] = useState<SinglesMeta>({})
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -95,12 +162,13 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
         isNew: product.isNew,
       })
       try {
-        setMeta(product.metadata ? JSON.parse(product.metadata as unknown as string) : { condition: 'NM' })
-      } catch { setMeta({ condition: 'NM' }) }
+        setMeta(product.metadata ? JSON.parse(product.metadata as unknown as string) : {})
+      } catch { setMeta({}) }
       setVariants(
         (product.variants ?? []).map((v) => ({
           id: v.id,
           language: v.language,
+          condition: v.condition ?? 'NM',
           price: String(v.price),
           originalPrice: v.originalPrice ? String(v.originalPrice) : '',
           stock: String(v.stock),
@@ -109,20 +177,45 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
     } else {
       setForm(EMPTY_FORM)
       setVariants([{ ...EMPTY_VARIANT }])
-      setMeta({ condition: 'NM' })
+      setMeta({})
     }
   }, [product, isOpen])
 
   const set = (field: keyof typeof EMPTY_FORM, value: string | boolean) =>
     setForm((prev) => ({ ...prev, [field]: value }))
 
+  const handleCardSelect = (name: string, category: string, imageUrls: string[]) => {
+    set('name', name)
+    if (category) set('category', category)
+    if (imageUrls.length > 0) set('images', imageUrls.join('\n'))
+  }
+
+  const removeImage = (index: number) => {
+    const lines = form.images.split('\n').filter(Boolean)
+    lines.splice(index, 1)
+    set('images', lines.join('\n'))
+  }
+
   const setVariant = (i: number, field: keyof VariantForm, value: string) =>
     setVariants((prev) => prev.map((v, idx) => (idx === i ? { ...v, [field]: value } : v)))
 
   const addVariant = () => {
-    const usedLangs = variants.map((v) => v.language)
-    const next = LANGUAGES.find((l) => !usedLangs.includes(l)) ?? 'español'
-    setVariants((prev) => [...prev, { ...EMPTY_VARIANT, language: next }])
+    if (form.type === 'singles') {
+      // Para singles la unicidad es (idioma, condición) — buscar el primer combo libre
+      const usedCombos = new Set(variants.map((v) => `${v.language}__${v.condition}`))
+      for (const lang of LANGUAGES) {
+        for (const cond of CONDITIONS) {
+          if (!usedCombos.has(`${lang}__${cond}`)) {
+            setVariants((prev) => [...prev, { ...EMPTY_VARIANT, language: lang, condition: cond }])
+            return
+          }
+        }
+      }
+    } else {
+      const usedLangs = variants.map((v) => v.language)
+      const next = LANGUAGES.find((l) => !usedLangs.includes(l)) ?? 'español'
+      setVariants((prev) => [...prev, { ...EMPTY_VARIANT, language: next }])
+    }
   }
 
   const removeVariant = (i: number) =>
@@ -142,6 +235,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
     const variantsPayload = variants.map((v) => ({
       id: v.id,
       language: v.language,
+      condition: v.condition,
       price: parseFloat(v.price),
       originalPrice: v.originalPrice ? parseFloat(v.originalPrice) : null,
       stock: parseInt(v.stock),
@@ -211,7 +305,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside">
+    <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside" closeOnOverlayClick={false} closeOnEsc={false}>
       <ModalOverlay bg="blackAlpha.800" />
       <ModalContent bg="#111111" border="1px solid #1e1e1e" borderRadius="xl">
         <ModalHeader fontFamily="heading" fontSize="20px" color="white" letterSpacing="0.05em">
@@ -221,14 +315,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
 
         <ModalBody pb={4}>
           <SimpleGrid columns={2} spacing={4}>
-            {/* Base fields */}
-            <FormControl gridColumn="1 / -1">
-              <FormLabel fontSize="12px" color="gray.500">Nombre *</FormLabel>
-              <Input bg="#0d0d0d" borderColor="#2a2a2a" color="white"
-                value={form.name} onChange={(e) => set('name', e.target.value)}
-                placeholder="Ej: Booster Box Scarlet & Violet"
-              />
-            </FormControl>
+            {/* Franquicia + Tipo — primero */}
             <FormControl>
               <FormLabel fontSize="12px" color="gray.500">Franquicia *</FormLabel>
               <Select bg="#0d0d0d" borderColor="#2a2a2a" color="white"
@@ -248,29 +335,39 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
                 <option value="singles">Singles</option>
               </Select>
             </FormControl>
+
+            {/* Nombre */}
+            <FormControl gridColumn="1 / -1">
+              <FormLabel fontSize="12px" color="gray.500">Nombre *</FormLabel>
+              <Input bg="#0d0d0d" borderColor="#2a2a2a" color="white"
+                value={form.name} onChange={(e) => set('name', e.target.value)}
+                placeholder={form.type === 'singles' ? 'Se autocompleta al buscar la carta' : 'Ej: Booster Box Scarlet & Violet'}
+              />
+            </FormControl>
+
+            {/* Categoría */}
             <FormControl gridColumn="1 / -1">
               <FormLabel fontSize="12px" color="gray.500">Categoría *</FormLabel>
               <Input bg="#0d0d0d" borderColor="#2a2a2a" color="white"
                 value={form.category} onChange={(e) => set('category', e.target.value)}
-                placeholder="Ej: Booster Box, Starter Deck..."
+                placeholder={form.type === 'singles' ? 'Se autocompleta al buscar la carta' : 'Ej: Booster Box, Starter Deck...'}
               />
             </FormControl>
-            <FormControl gridColumn="1 / -1">
-              <FormLabel fontSize="12px" color="gray.500">Descripción</FormLabel>
-              <Textarea bg="#0d0d0d" borderColor="#2a2a2a" color="white" rows={3}
-                value={form.description} onChange={(e) => set('description', e.target.value)}
-              />
-            </FormControl>
-            <FormControl gridColumn="1 / -1">
-              <FormLabel fontSize="12px" color="gray.500">
-                URLs de imágenes
-                <Text as="span" color="gray.700" fontWeight={400} ml={2}>(una por línea)</Text>
-              </FormLabel>
-              <Textarea bg="#0d0d0d" borderColor="#2a2a2a" color="white" rows={2}
-                fontFamily="mono" fontSize="12px" value={form.images}
-                onChange={(e) => set('images', e.target.value)}
-              />
-            </FormControl>
+
+            {/* Descripción — solo sealed */}
+            {form.type !== 'singles' && (
+              <FormControl gridColumn="1 / -1">
+                <FormLabel fontSize="12px" color="gray.500">Descripción</FormLabel>
+                <Textarea bg="#0d0d0d" borderColor="#2a2a2a" color="white" rows={3}
+                  value={form.description} onChange={(e) => set('description', e.target.value)}
+                />
+              </FormControl>
+            )}
+
+            {/* Imágenes — solo sealed (para singles va abajo de Datos de carta) */}
+            {form.type !== 'singles' && <ImageSection form={form} set={set} removeImage={removeImage} />}
+
+            {/* Destacado / Nuevo */}
             <HStack spacing={6} gridColumn="1 / -1">
               <FormControl display="flex" alignItems="center" gap={3} w="auto">
                 <Switch colorScheme="yellow" isChecked={form.featured}
@@ -285,13 +382,17 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
             </HStack>
           </SimpleGrid>
 
-          {/* Singles metadata */}
+          {/* Singles: metadata + imágenes debajo */}
           {form.type === 'singles' && (
-            <SinglesMetadataForm
-              franchise={form.franchise}
-              meta={meta}
-              onChange={setMeta}
-            />
+            <>
+              <SinglesMetadataForm
+                franchise={form.franchise}
+                meta={meta}
+                onChange={setMeta}
+                onCardSelect={handleCardSelect}
+              />
+              <ImageSection form={form} set={set} removeImage={removeImage} />
+            </>
           )}
 
           {/* Variants */}
@@ -304,9 +405,13 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
               size="xs" leftIcon={<FiPlus size={11} />} variant="ghost"
               color="brand.400" _hover={{ bg: 'rgba(255,208,0,0.06)' }}
               onClick={addVariant}
-              isDisabled={variants.length >= LANGUAGES.length}
+              isDisabled={
+                form.type === 'singles'
+                  ? variants.length >= LANGUAGES.length * CONDITIONS.length
+                  : variants.length >= LANGUAGES.length
+              }
             >
-              Añadir idioma
+              Añadir variante
             </Button>
           </HStack>
 
@@ -314,17 +419,45 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
             {variants.map((v, i) => (
               <Box key={i} bg="#0d0d0d" border="1px solid #2a2a2a" borderRadius="lg" p={4}>
                 <HStack justify="space-between" mb={3}>
-                  <Select
-                    size="sm" maxW="160px" bg="#111111" borderColor="#2a2a2a" color="white"
-                    value={v.language} onChange={(e) => setVariant(i, 'language', e.target.value)}
-                    textTransform="capitalize"
-                  >
-                    {LANGUAGES.map((l) => (
-                      <option key={l} value={l} disabled={variants.some((vv, ii) => ii !== i && vv.language === l)}>
-                        {l.charAt(0).toUpperCase() + l.slice(1)}
-                      </option>
-                    ))}
-                  </Select>
+                  <HStack spacing={2}>
+                    <Select
+                      size="sm" maxW="140px" bg="#111111" borderColor="#2a2a2a" color="white"
+                      value={v.language} onChange={(e) => setVariant(i, 'language', e.target.value)}
+                      textTransform="capitalize"
+                    >
+                      {LANGUAGES.map((l) => (
+                        <option
+                          key={l}
+                          value={l}
+                          disabled={
+                            form.type === 'singles'
+                              // Singles: bloquear solo si el combo (idioma+condición) ya existe
+                              ? variants.some((vv, ii) => ii !== i && vv.language === l && vv.condition === v.condition)
+                              // Sealed: bloquear si el idioma ya está usado
+                              : variants.some((vv, ii) => ii !== i && vv.language === l)
+                          }
+                        >
+                          {l.charAt(0).toUpperCase() + l.slice(1)}
+                        </option>
+                      ))}
+                    </Select>
+                    {form.type === 'singles' && (
+                      <Select
+                        size="sm" maxW="120px" bg="#111111" borderColor="#2a2a2a" color="white"
+                        value={v.condition} onChange={(e) => setVariant(i, 'condition', e.target.value)}
+                      >
+                        {CONDITIONS.map((c) => (
+                          <option
+                            key={c}
+                            value={c}
+                            disabled={variants.some((vv, ii) => ii !== i && vv.language === v.language && vv.condition === c)}
+                          >
+                            {c}
+                          </option>
+                        ))}
+                      </Select>
+                    )}
+                  </HStack>
                   {variants.length > 1 && (
                     <IconButton
                       aria-label="Eliminar variante"

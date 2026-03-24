@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from 'react'
+import { useMemo } from 'react'
 import {
   Box,
   Container,
@@ -26,25 +26,22 @@ interface Filters {
 export function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const [filters, setFilters] = useState<Filters>({
+  // Derivar filtros directamente de la URL — se actualiza con cada cambio de URL
+  const filters: Filters = {
     search: searchParams.get('search') ?? '',
     franchise: (searchParams.get('franchise') as Franchise) ?? 'all',
     type: (searchParams.get('type') as ProductType) ?? 'all',
     sort: (searchParams.get('sort') as SortOption) ?? 'featured',
-  })
-
-  // Sync URL when filters change
-  useEffect(() => {
-    const params: Record<string, string> = {}
-    if (filters.search) params.search = filters.search
-    if (filters.franchise !== 'all') params.franchise = filters.franchise
-    if (filters.type !== 'all') params.type = filters.type
-    if (filters.sort !== 'featured') params.sort = filters.sort
-    setSearchParams(params, { replace: true })
-  }, [filters, setSearchParams])
+  }
 
   const handleFilterChange = (partial: Partial<Filters>) => {
-    setFilters((prev) => ({ ...prev, ...partial }))
+    const next = { ...filters, ...partial }
+    const params: Record<string, string> = {}
+    if (next.search) params.search = next.search
+    if (next.franchise !== 'all') params.franchise = next.franchise
+    if (next.type !== 'all') params.type = next.type
+    if (next.sort !== 'featured') params.sort = next.sort
+    setSearchParams(params, { replace: true })
   }
 
   const allProducts = useProducts()

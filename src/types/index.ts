@@ -6,10 +6,23 @@ export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'name-asc'
 
 export type Language = 'español' | 'inglés' | 'japonés' | 'portugués'
 
+export type CardCondition = 'NM' | 'LP' | 'MP' | 'HP' | 'Damaged'
+
+export const CONDITION_ORDER: CardCondition[] = ['NM', 'LP', 'MP', 'HP', 'Damaged']
+
+export const CONDITION_LABELS: Record<CardCondition, string> = {
+  NM: 'Near Mint',
+  LP: 'Lightly Played',
+  MP: 'Moderately Played',
+  HP: 'Heavily Played',
+  Damaged: 'Damaged',
+}
+
 export interface ProductVariant {
   id: string
   productId: string
   language: Language
+  condition?: CardCondition  // 'NM' por defecto; obligatorio en singles
   price: number
   originalPrice?: number | null
   stock: number
@@ -42,8 +55,8 @@ export function getMinVariant(product: Product): ProductVariant {
 }
 
 /** Clave única de un item en el carrito */
-export function cartKey(productId: string, language: string): string {
-  return `${productId}__${language}`
+export function cartKey(productId: string, language: string, condition?: string): string {
+  return condition ? `${productId}__${language}__${condition}` : `${productId}__${language}`
 }
 
 export const FRANCHISE_CONFIG: Record<

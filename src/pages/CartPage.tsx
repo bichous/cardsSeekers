@@ -98,7 +98,7 @@ export function CartPage() {
           <VStack align="stretch" spacing={0} divider={<Divider borderColor="#1e1e1e" />}>
             {state.items.map((item) => {
               const franchise = FRANCHISE_CONFIG[item.product.franchise]
-              const key = cartKey(item.product.id, item.variant.language)
+              const key = cartKey(item.product.id, item.variant.language, item.variant.condition)
               return (
                 <HStack
                   key={key}
@@ -156,6 +156,9 @@ export function CartPage() {
                     </Text>
                     <Text fontSize="12px" color="gray.600">
                       {item.product.category} · <Text as="span" textTransform="capitalize">{item.variant.language}</Text>
+                      {item.product.type === 'singles' && item.variant.condition && (
+                        <> · <Text as="span" color="accent.400">{item.variant.condition}</Text></>
+                      )}
                     </Text>
 
                     <Flex align="center" justify="space-between" mt={2} flexWrap="wrap" gap={2}>

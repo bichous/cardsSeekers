@@ -17,8 +17,8 @@ export const products: Product[] = [
     featured: true,
     isNew: false,
     variants: [
-      { id: 'poke-001-es', productId: 'poke-001', language: 'español', price: 49.99, stock: 8 },
-      { id: 'poke-001-en', productId: 'poke-001', language: 'inglés', price: 44.99, stock: 5 },
+      { id: 'poke-001-es', productId: 'poke-001', language: 'español', condition: 'NM', price: 49.99, stock: 8 },
+      { id: 'poke-001-en', productId: 'poke-001', language: 'inglés', condition: 'NM', price: 44.99, stock: 5 },
     ],
   },
   {
@@ -34,9 +34,9 @@ export const products: Product[] = [
     featured: true,
     isNew: false,
     variants: [
-      { id: 'poke-002-es', productId: 'poke-002', language: 'español', price: 119.99, stock: 3 },
-      { id: 'poke-002-en', productId: 'poke-002', language: 'inglés', price: 109.99, stock: 6 },
-      { id: 'poke-002-jp', productId: 'poke-002', language: 'japonés', price: 99.99, stock: 2 },
+      { id: 'poke-002-es', productId: 'poke-002', language: 'español', condition: 'NM', price: 119.99, stock: 3 },
+      { id: 'poke-002-en', productId: 'poke-002', language: 'inglés', condition: 'NM', price: 109.99, stock: 6 },
+      { id: 'poke-002-jp', productId: 'poke-002', language: 'japonés', condition: 'NM', price: 99.99, stock: 2 },
     ],
   },
   {
@@ -52,8 +52,8 @@ export const products: Product[] = [
     featured: false,
     isNew: false,
     variants: [
-      { id: 'poke-003-es', productId: 'poke-003', language: 'español', price: 24.99, originalPrice: 29.99, stock: 12 },
-      { id: 'poke-003-en', productId: 'poke-003', language: 'inglés', price: 21.99, originalPrice: 26.99, stock: 8 },
+      { id: 'poke-003-es', productId: 'poke-003', language: 'español', condition: 'NM', price: 24.99, originalPrice: 29.99, stock: 12 },
+      { id: 'poke-003-en', productId: 'poke-003', language: 'inglés', condition: 'NM', price: 21.99, originalPrice: 26.99, stock: 8 },
     ],
   },
   // ─── POKÉMON – CARTAS SUELTAS ─────────────────────────────────────────
@@ -70,9 +70,9 @@ export const products: Product[] = [
     featured: true,
     isNew: true,
     variants: [
-      { id: 'poke-004-es', productId: 'poke-004', language: 'español', price: 34.99, stock: 5 },
-      { id: 'poke-004-en', productId: 'poke-004', language: 'inglés', price: 29.99, stock: 3 },
-      { id: 'poke-004-jp', productId: 'poke-004', language: 'japonés', price: 24.99, stock: 7 },
+      { id: 'poke-004-es', productId: 'poke-004', language: 'español', condition: 'NM', price: 34.99, stock: 5 },
+      { id: 'poke-004-en', productId: 'poke-004', language: 'inglés', condition: 'NM', price: 29.99, stock: 3 },
+      { id: 'poke-004-jp', productId: 'poke-004', language: 'japonés', condition: 'NM', price: 24.99, stock: 7 },
     ],
   },
   {
@@ -88,8 +88,8 @@ export const products: Product[] = [
     featured: true,
     isNew: false,
     variants: [
-      { id: 'poke-005-es', productId: 'poke-005', language: 'español', price: 89.99, stock: 2 },
-      { id: 'poke-005-en', productId: 'poke-005', language: 'inglés', price: 79.99, stock: 4 },
+      { id: 'poke-005-es', productId: 'poke-005', language: 'español', condition: 'NM', price: 89.99, stock: 2 },
+      { id: 'poke-005-en', productId: 'poke-005', language: 'inglés', condition: 'NM', price: 79.99, stock: 4 },
     ],
   },
 
@@ -107,8 +107,8 @@ export const products: Product[] = [
     featured: false,
     isNew: false,
     variants: [
-      { id: 'yugi-001-es', productId: 'yugi-001', language: 'español', price: 11.99, stock: 15 },
-      { id: 'yugi-001-en', productId: 'yugi-001', language: 'inglés', price: 10.99, stock: 10 },
+      { id: 'yugi-001-es', productId: 'yugi-001', language: 'español', condition: 'NM', price: 11.99, stock: 15 },
+      { id: 'yugi-001-en', productId: 'yugi-001', language: 'inglés', condition: 'NM', price: 10.99, stock: 10 },
     ],
   },
   {
@@ -124,8 +124,8 @@ export const products: Product[] = [
     featured: true,
     isNew: true,
     variants: [
-      { id: 'yugi-002-es', productId: 'yugi-002', language: 'español', price: 89.99, stock: 4 },
-      { id: 'yugi-002-en', productId: 'yugi-002', language: 'inglés', price: 84.99, stock: 7 },
+      { id: 'yugi-002-es', productId: 'yugi-002', language: 'español', condition: 'NM', price: 89.99, stock: 4 },
+      { id: 'yugi-002-en', productId: 'yugi-002', language: 'inglés', condition: 'NM', price: 84.99, stock: 7 },
     ],
   },
   {
@@ -141,8 +141,8 @@ export const products: Product[] = [
     featured: true,
     isNew: false,
     variants: [
-      { id: 'yugi-003-es', productId: 'yugi-003', language: 'español', price: 44.99, stock: 6 },
-      { id: 'yugi-003-en', productId: 'yugi-003', language: 'inglés', price: 39.99, stock: 3 },
+      { id: 'yugi-003-es', productId: 'yugi-003', language: 'español', condition: 'NM', price: 44.99, stock: 6 },
+      { id: 'yugi-003-en', productId: 'yugi-003', language: 'inglés', condition: 'NM', price: 39.99, stock: 3 },
     ],
   },
   // ─── YU-GI-OH! – CARTAS SUELTAS ──────────────────────────────────────
@@ -159,8 +159,8 @@ export const products: Product[] = [
     featured: false,
     isNew: false,
     variants: [
-      { id: 'yugi-004-es', productId: 'yugi-004', language: 'español', price: 29.99, stock: 3 },
-      { id: 'yugi-004-en', productId: 'yugi-004', language: 'inglés', price: 24.99, stock: 5 },
+      { id: 'yugi-004-es', productId: 'yugi-004', language: 'español', condition: 'NM', price: 29.99, stock: 3 },
+      { id: 'yugi-004-en', productId: 'yugi-004', language: 'inglés', condition: 'NM', price: 24.99, stock: 5 },
     ],
   },
   {
@@ -176,8 +176,8 @@ export const products: Product[] = [
     featured: false,
     isNew: true,
     variants: [
-      { id: 'yugi-005-es', productId: 'yugi-005', language: 'español', price: 19.99, stock: 9 },
-      { id: 'yugi-005-en', productId: 'yugi-005', language: 'inglés', price: 17.99, stock: 6 },
+      { id: 'yugi-005-es', productId: 'yugi-005', language: 'español', condition: 'NM', price: 19.99, stock: 9 },
+      { id: 'yugi-005-en', productId: 'yugi-005', language: 'inglés', condition: 'NM', price: 17.99, stock: 6 },
     ],
   },
 
@@ -195,9 +195,9 @@ export const products: Product[] = [
     featured: false,
     isNew: false,
     variants: [
-      { id: 'onep-001-es', productId: 'onep-001', language: 'español', price: 12.99, stock: 20 },
-      { id: 'onep-001-en', productId: 'onep-001', language: 'inglés', price: 11.99, stock: 15 },
-      { id: 'onep-001-jp', productId: 'onep-001', language: 'japonés', price: 9.99, stock: 10 },
+      { id: 'onep-001-es', productId: 'onep-001', language: 'español', condition: 'NM', price: 12.99, stock: 20 },
+      { id: 'onep-001-en', productId: 'onep-001', language: 'inglés', condition: 'NM', price: 11.99, stock: 15 },
+      { id: 'onep-001-jp', productId: 'onep-001', language: 'japonés', condition: 'NM', price: 9.99, stock: 10 },
     ],
   },
   {
@@ -213,9 +213,9 @@ export const products: Product[] = [
     featured: true,
     isNew: false,
     variants: [
-      { id: 'onep-002-es', productId: 'onep-002', language: 'español', price: 79.99, stock: 5 },
-      { id: 'onep-002-en', productId: 'onep-002', language: 'inglés', price: 74.99, stock: 8 },
-      { id: 'onep-002-jp', productId: 'onep-002', language: 'japonés', price: 64.99, stock: 4 },
+      { id: 'onep-002-es', productId: 'onep-002', language: 'español', condition: 'NM', price: 79.99, stock: 5 },
+      { id: 'onep-002-en', productId: 'onep-002', language: 'inglés', condition: 'NM', price: 74.99, stock: 8 },
+      { id: 'onep-002-jp', productId: 'onep-002', language: 'japonés', condition: 'NM', price: 64.99, stock: 4 },
     ],
   },
   {
@@ -231,9 +231,9 @@ export const products: Product[] = [
     featured: true,
     isNew: true,
     variants: [
-      { id: 'onep-003-es', productId: 'onep-003', language: 'español', price: 94.99, stock: 2 },
-      { id: 'onep-003-en', productId: 'onep-003', language: 'inglés', price: 89.99, stock: 3 },
-      { id: 'onep-003-jp', productId: 'onep-003', language: 'japonés', price: 79.99, stock: 1 },
+      { id: 'onep-003-es', productId: 'onep-003', language: 'español', condition: 'NM', price: 94.99, stock: 2 },
+      { id: 'onep-003-en', productId: 'onep-003', language: 'inglés', condition: 'NM', price: 89.99, stock: 3 },
+      { id: 'onep-003-jp', productId: 'onep-003', language: 'japonés', condition: 'NM', price: 79.99, stock: 1 },
     ],
   },
   // ─── ONE PIECE – CARTAS SUELTAS ───────────────────────────────────────
@@ -250,9 +250,9 @@ export const products: Product[] = [
     featured: false,
     isNew: false,
     variants: [
-      { id: 'onep-004-es', productId: 'onep-004', language: 'español', price: 14.99, stock: 7 },
-      { id: 'onep-004-en', productId: 'onep-004', language: 'inglés', price: 12.99, stock: 5 },
-      { id: 'onep-004-jp', productId: 'onep-004', language: 'japonés', price: 10.99, stock: 9 },
+      { id: 'onep-004-es', productId: 'onep-004', language: 'español', condition: 'NM', price: 14.99, stock: 7 },
+      { id: 'onep-004-en', productId: 'onep-004', language: 'inglés', condition: 'NM', price: 12.99, stock: 5 },
+      { id: 'onep-004-jp', productId: 'onep-004', language: 'japonés', condition: 'NM', price: 10.99, stock: 9 },
     ],
   },
   {
@@ -268,9 +268,9 @@ export const products: Product[] = [
     featured: true,
     isNew: false,
     variants: [
-      { id: 'onep-005-es', productId: 'onep-005', language: 'español', price: 49.99, stock: 1 },
-      { id: 'onep-005-en', productId: 'onep-005', language: 'inglés', price: 44.99, stock: 2 },
-      { id: 'onep-005-jp', productId: 'onep-005', language: 'japonés', price: 39.99, stock: 3 },
+      { id: 'onep-005-es', productId: 'onep-005', language: 'español', condition: 'NM', price: 49.99, stock: 1 },
+      { id: 'onep-005-en', productId: 'onep-005', language: 'inglés', condition: 'NM', price: 44.99, stock: 2 },
+      { id: 'onep-005-jp', productId: 'onep-005', language: 'japonés', condition: 'NM', price: 39.99, stock: 3 },
     ],
   },
 ]
