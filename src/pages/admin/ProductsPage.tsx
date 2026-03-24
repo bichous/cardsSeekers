@@ -22,11 +22,12 @@ import {
   Center,
   useDisclosure,
 } from '@chakra-ui/react'
-import { FiPlus, FiEdit2, FiTrash2, FiSearch } from 'react-icons/fi'
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiEye } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext'
 import { FRANCHISE_CONFIG, formatPrice } from '../../types'
 import type { Franchise } from '../../types'
 import { ProductFormModal } from './ProductFormModal'
+import { ProductPreviewModal } from './ProductPreviewModal'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
@@ -34,6 +35,7 @@ export interface AdminVariant {
   id: string
   productId: string
   language: string
+  condition?: string
   price: number
   originalPrice?: number | null
   stock: number
@@ -66,6 +68,8 @@ export function ProductsPage() {
   const [language, setLanguage] = useState('')
   const [search, setSearch] = useState('')
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null)
+  const [previewProduct, setPreviewProduct] = useState<AdminProduct | null>(null)
+  const { isOpen: isPreviewOpen, onOpen: onPreviewOpen, onClose: onPreviewClose } = useDisclosure()
 
   const fetchProducts = useCallback(async () => {
     setLoading(true)
@@ -112,6 +116,11 @@ export function ProductsPage() {
   const openNew = () => {
     setEditingProduct(null)
     onOpen()
+  }
+
+  const openPreview = (product: AdminProduct) => {
+    setPreviewProduct(product)
+    onPreviewOpen()
   }
 
   return (
@@ -290,6 +299,14 @@ export function ProductsPage() {
                     <Td>
                       <HStack spacing={1} justify="flex-end">
                         <IconButton
+                          aria-label="Vista previa"
+                          icon={<FiEye size={13} />}
+                          size="xs"
+                          variant="ghost"
+                          colorScheme="blue"
+                          onClick={() => openPreview(p)}
+                        />
+                        <IconButton
                           aria-label="Editar"
                           icon={<FiEdit2 size={13} />}
                           size="xs"
@@ -320,6 +337,12 @@ export function ProductsPage() {
         onClose={onClose}
         product={editingProduct}
         onSaved={fetchProducts}
+      />
+
+      <ProductPreviewModal
+        isOpen={isPreviewOpen}
+        onClose={onPreviewClose}
+        product={previewProduct}
       />
     </Box>
   )
