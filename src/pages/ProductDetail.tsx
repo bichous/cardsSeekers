@@ -154,11 +154,11 @@ export function ProductDetail() {
       return ai - bi
     })
 
-  // Show condition selector only when singles has multiple distinct conditions for this language
+  // Show condition selector for all singles (even if only one condition)
   const availableConditions = isSingles
     ? CONDITION_ORDER.filter((c) => variantsForLanguage.some((v) => (v.condition ?? 'NM') === c))
     : []
-  const showConditionSelector = availableConditions.length > 1
+  const showConditionSelector = isSingles && availableConditions.length > 0
 
   const variant = selectedVariant ?? product.variants[0]
   const stock = getStockLabel(variant.stock)
