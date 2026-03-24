@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(npm run:*)",
-      "Bash(ls /Users/bichous/Downloads/cardsSeekers/.env*)"
+      "Bash(ls /Users/bichous/Downloads/cardsSeekers/.env*)",
+      "WebSearch"
     ]
   }
 }
