@@ -22,7 +22,7 @@ import {
 } from '@chakra-ui/react'
 import { HamburgerIcon } from '@chakra-ui/icons'
 import { FiShoppingCart, FiUser, FiLogOut, FiPackage, FiSettings } from 'react-icons/fi'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
@@ -41,6 +41,14 @@ export function Header() {
   const { itemCount, toggleCart } = useCart()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  const isActive = (to: string) => {
+    const [path, search] = to.split('?')
+    if (search) return location.pathname === path && location.search === `?${search}`
+    if (path === '/') return location.pathname === '/'
+    return location.pathname.startsWith(path)
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -92,20 +100,18 @@ export function Header() {
             {/* Desktop nav */}
             <HStack as="nav" spacing={1} display={{ base: 'none', lg: 'flex' }}>
               {NAV_LINKS.map((link) => (
-                <NavLink key={link.to} to={link.to} end={link.to === '/'}>
-                  {({ isActive }) => (
-                    <Button
-                      variant="ghost_nav"
-                      size="sm"
-                      px={3}
-                      color={isActive ? 'brand.400' : 'gray.300'}
-                      fontWeight={isActive ? 600 : 400}
-                      _hover={{ color: 'brand.400' }}
-                    >
-                      {link.label}
-                    </Button>
-                  )}
-                </NavLink>
+                <Button
+                  key={link.to}
+                  variant="ghost_nav"
+                  size="sm"
+                  px={3}
+                  color={isActive(link.to) ? 'brand.400' : 'gray.300'}
+                  fontWeight={isActive(link.to) ? 600 : 400}
+                  _hover={{ color: 'brand.400' }}
+                  onClick={() => navigate(link.to)}
+                >
+                  {link.label}
+                </Button>
               ))}
             </HStack>
 

@@ -26,10 +26,6 @@ import { ChevronRightIcon } from '@chakra-ui/icons'
 import { FiShoppingCart, FiArrowLeft } from 'react-icons/fi'
 import { getProductById } from '../data/products'
 
-const CONDITION_LABELS: Record<string, string> = {
-  NM: 'Near Mint (NM)', LP: 'Lightly Played (LP)', MP: 'Moderately Played (MP)',
-  HP: 'Heavily Played (HP)', Damaged: 'Damaged',
-}
 
 function MetaRow({ label, value }: { label: string; value?: string }) {
   if (!value) return null
@@ -43,8 +39,6 @@ function MetaRow({ label, value }: { label: string; value?: string }) {
 
 function CardMetadataBlock({ franchise, meta }: { franchise: string; meta: Record<string, string> }) {
   const rows: { label: string; value?: string }[] = []
-
-  if (meta.condition) rows.push({ label: 'Condición', value: CONDITION_LABELS[meta.condition] ?? meta.condition })
 
   if (franchise === 'yugioh') {
     rows.push(
@@ -96,7 +90,7 @@ function CardMetadataBlock({ franchise, meta }: { franchise: string; meta: Recor
     </Box>
   )
 }
-import { FRANCHISE_CONFIG, formatPrice, getStockLabel, type ProductVariant, type Product } from '../types'
+import { FRANCHISE_CONFIG, formatPrice, getStockLabel, CONDITION_ORDER, CONDITION_LABELS, type ProductVariant, type Product } from '../types'
 import { fetchProductById } from '../hooks/useProducts'
 import { useProducts } from '../hooks/useProducts'
 import { useCart } from '../context/CartContext'
@@ -145,9 +139,44 @@ export function ProductDetail() {
   }
 
   const franchise = FRANCHISE_CONFIG[product.franchise]
+  const isSingles = product.type === 'singles'
+
+  // Unique languages available
+  const languages = [...new Set(product.variants.map((v) => v.language))]
+  const selectedLanguage = (selectedVariant ?? product.variants[0]).language
+
+  // Variants for selected language, sorted by condition order
+  const variantsForLanguage = product.variants
+    .filter((v) => v.language === selectedLanguage)
+    .sort((a, b) => {
+      const ai = CONDITION_ORDER.indexOf(a.condition ?? 'NM')
+      const bi = CONDITION_ORDER.indexOf(b.condition ?? 'NM')
+      return ai - bi
+    })
+
+  // Show condition selector for all singles (even if only one condition)
+  const availableConditions = isSingles
+    ? CONDITION_ORDER.filter((c) => variantsForLanguage.some((v) => (v.condition ?? 'NM') === c))
+    : []
+  const showConditionSelector = isSingles && availableConditions.length > 0
+
   const variant = selectedVariant ?? product.variants[0]
   const stock = getStockLabel(variant.stock)
   const isOutOfStock = variant.stock === 0
+
+  const handleLanguageChange = (lang: string) => {
+    // Buscar mejor condición disponible (NM primero), fallback al primer variant del idioma
+    const best =
+      CONDITION_ORDER.map((c) =>
+        product.variants.find((v) => v.language === lang && (v.condition ?? 'NM') === c)
+      ).find(Boolean) ?? product.variants.find((v) => v.language === lang)
+    if (best) { setSelectedVariant(best); setQuantity(1) }
+  }
+
+  const handleConditionChange = (condition: string) => {
+    const v = variantsForLanguage.find((v) => (v.condition ?? 'NM') === condition)
+    if (v) { setSelectedVariant(v); setQuantity(1) }
+  }
 
   const handleAddToCart = () => {
     for (let i = 0; i < quantity; i++) addToCart(product, variant)
@@ -280,29 +309,66 @@ export function ProductDetail() {
             </Box>
 
             {/* Language selector */}
-            {product.variants.length > 1 && (
+            {languages.length > 1 && (
               <VStack align="flex-start" spacing={2}>
                 <Text fontSize="11px" color="gray.600" fontWeight={600} textTransform="uppercase" letterSpacing="0.08em">
                   Idioma
                 </Text>
                 <HStack spacing={2} flexWrap="wrap">
-                  {product.variants.map((v) => (
-                    <Button
-                      key={v.language}
-                      size="sm"
-                      variant={variant.language === v.language ? 'primary' : 'outline_brand'}
-                      onClick={() => { setSelectedVariant(v); setQuantity(1) }}
-                      textTransform="capitalize"
-                      fontSize="12px"
-                      h="32px"
-                      px={4}
-                      opacity={v.stock === 0 ? 0.4 : 1}
-                    >
-                      {v.language}
-                      {v.stock === 0 && ' (agotado)'}
-                    </Button>
-                  ))}
+                  {languages.map((lang) => {
+                    const allOut = product.variants.filter((v) => v.language === lang).every((v) => v.stock === 0)
+                    return (
+                      <Button
+                        key={lang}
+                        size="sm"
+                        variant={selectedLanguage === lang ? 'primary' : 'outline_brand'}
+                        onClick={() => handleLanguageChange(lang)}
+                        textTransform="capitalize"
+                        fontSize="12px"
+                        h="32px"
+                        px={4}
+                        opacity={allOut ? 0.4 : 1}
+                      >
+                        {lang}
+                        {allOut && ' (agotado)'}
+                      </Button>
+                    )
+                  })}
                 </HStack>
+              </VStack>
+            )}
+
+            {/* Condition selector — solo singles con múltiples condiciones */}
+            {showConditionSelector && (
+              <VStack align="flex-start" spacing={2}>
+                <Text fontSize="11px" color="gray.600" fontWeight={600} textTransform="uppercase" letterSpacing="0.08em">
+                  Condición
+                </Text>
+                <HStack spacing={2} flexWrap="wrap">
+                  {availableConditions.map((cond) => {
+                    const v = variantsForLanguage.find((v) => (v.condition ?? 'NM') === cond)
+                    const outOfStock = !v || v.stock === 0
+                    return (
+                      <Button
+                        key={cond}
+                        size="sm"
+                        variant={(variant.condition ?? 'NM') === cond ? 'primary' : 'outline_brand'}
+                        onClick={() => handleConditionChange(cond)}
+                        fontSize="12px"
+                        h="32px"
+                        px={4}
+                        opacity={outOfStock ? 0.4 : 1}
+                        isDisabled={outOfStock}
+                        title={CONDITION_LABELS[cond]}
+                      >
+                        {cond}
+                      </Button>
+                    )
+                  })}
+                </HStack>
+                <Text fontSize="11px" color="gray.600">
+                  {CONDITION_LABELS[variant.condition ?? 'NM']}
+                </Text>
               </VStack>
             )}
 

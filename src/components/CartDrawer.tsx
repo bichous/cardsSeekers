@@ -88,7 +88,7 @@ export function CartDrawer() {
             <VStack align="stretch" spacing={0} divider={<Divider borderColor="#1e1e1e" />}>
               {state.items.map((item) => {
                 const franchise = FRANCHISE_CONFIG[item.product.franchise]
-                const key = cartKey(item.product.id, item.variant.language)
+                const key = cartKey(item.product.id, item.variant.language, item.variant.condition)
                 return (
                   <HStack key={key} p={4} spacing={3} align="flex-start">
                     {/* Image */}
@@ -126,6 +126,9 @@ export function CartDrawer() {
                       </Text>
                       <Text fontSize="10px" color="gray.600" textTransform="capitalize">
                         {item.variant.language}
+                        {item.product.type === 'singles' && item.variant.condition && (
+                          <> · <Text as="span" color="accent.400">{item.variant.condition}</Text></>
+                        )}
                       </Text>
                       <Text fontSize="14px" fontWeight={700} color="brand.400">
                         {formatPrice(item.variant.price * item.quantity)}

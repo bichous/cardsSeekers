@@ -22,15 +22,15 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'ADD_TO_CART': {
       const { product, variant } = action.payload
-      const key = cartKey(product.id, variant.language)
-      const existing = state.items.find((i) => cartKey(i.product.id, i.variant.language) === key)
+      const key = cartKey(product.id, variant.language, variant.condition)
+      const existing = state.items.find((i) => cartKey(i.product.id, i.variant.language, i.variant.condition) === key)
       if (existing) {
         const newQty = Math.min(existing.quantity + 1, variant.stock)
         return {
           ...state,
           isOpen: true,
           items: state.items.map((i) =>
-            cartKey(i.product.id, i.variant.language) === key ? { ...i, quantity: newQty } : i
+            cartKey(i.product.id, i.variant.language, i.variant.condition) === key ? { ...i, quantity: newQty } : i
           ),
         }
       }
@@ -44,7 +44,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       return {
         ...state,
         items: state.items.filter(
-          (i) => cartKey(i.product.id, i.variant.language) !== action.payload
+          (i) => cartKey(i.product.id, i.variant.language, i.variant.condition) !== action.payload
         ),
       }
     case 'UPDATE_QTY':
@@ -52,7 +52,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         ...state,
         items: state.items
           .map((i) =>
-            cartKey(i.product.id, i.variant.language) === action.payload.key
+            cartKey(i.product.id, i.variant.language, i.variant.condition) === action.payload.key
               ? { ...i, quantity: action.payload.qty }
               : i
           )
