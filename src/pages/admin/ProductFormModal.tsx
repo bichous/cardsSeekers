@@ -1,0 +1,374 @@
+import {
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  Select,
+  Textarea,
+  SimpleGrid,
+  NumberInput,
+  NumberInputField,
+  Switch,
+  HStack,
+  VStack,
+  Text,
+  IconButton,
+  Box,
+  Divider,
+  useToast,
+} from '@chakra-ui/react'
+import { useState, useEffect } from 'react'
+import { FiPlus, FiTrash2 } from 'react-icons/fi'
+import { useAuth } from '../../context/AuthContext'
+import type { AdminProduct } from './ProductsPage'
+import { SinglesMetadataForm, type SinglesMeta } from './SinglesMetadataForm'
+
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
+
+interface VariantForm {
+  id?: string
+  language: string
+  price: string
+  originalPrice: string
+  stock: string
+}
+
+interface Props {
+  isOpen: boolean
+  onClose: () => void
+  product: AdminProduct | null
+  onSaved: () => void
+}
+
+const EMPTY_FORM = {
+  name: '',
+  franchise: 'pokemon',
+  type: 'sealed',
+  category: '',
+  description: '',
+  images: '',
+  featured: false,
+  isNew: false,
+}
+
+const EMPTY_VARIANT: VariantForm = {
+  language: 'español',
+  price: '',
+  originalPrice: '',
+  stock: '0',
+}
+
+const LANGUAGES = ['español', 'inglés', 'japonés', 'portugués']
+
+export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
+  const { token } = useAuth()
+  const toast = useToast()
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [variants, setVariants] = useState<VariantForm[]>([{ ...EMPTY_VARIANT }])
+  const [meta, setMeta] = useState<SinglesMeta>({ condition: 'NM' })
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (product) {
+      let imagesStr = ''
+      try {
+        const parsed = JSON.parse(product.images)
+        imagesStr = Array.isArray(parsed) ? parsed.join('\n') : product.images
+      } catch {
+        imagesStr = product.images
+      }
+      setForm({
+        name: product.name,
+        franchise: product.franchise,
+        type: product.type,
+        category: product.category,
+        description: product.description,
+        images: imagesStr,
+        featured: product.featured,
+        isNew: product.isNew,
+      })
+      try {
+        setMeta(product.metadata ? JSON.parse(product.metadata as unknown as string) : { condition: 'NM' })
+      } catch { setMeta({ condition: 'NM' }) }
+      setVariants(
+        (product.variants ?? []).map((v) => ({
+          id: v.id,
+          language: v.language,
+          price: String(v.price),
+          originalPrice: v.originalPrice ? String(v.originalPrice) : '',
+          stock: String(v.stock),
+        }))
+      )
+    } else {
+      setForm(EMPTY_FORM)
+      setVariants([{ ...EMPTY_VARIANT }])
+      setMeta({ condition: 'NM' })
+    }
+  }, [product, isOpen])
+
+  const set = (field: keyof typeof EMPTY_FORM, value: string | boolean) =>
+    setForm((prev) => ({ ...prev, [field]: value }))
+
+  const setVariant = (i: number, field: keyof VariantForm, value: string) =>
+    setVariants((prev) => prev.map((v, idx) => (idx === i ? { ...v, [field]: value } : v)))
+
+  const addVariant = () => {
+    const usedLangs = variants.map((v) => v.language)
+    const next = LANGUAGES.find((l) => !usedLangs.includes(l)) ?? 'español'
+    setVariants((prev) => [...prev, { ...EMPTY_VARIANT, language: next }])
+  }
+
+  const removeVariant = (i: number) =>
+    setVariants((prev) => prev.filter((_, idx) => idx !== i))
+
+  const handleSubmit = async () => {
+    if (!form.name || !form.category) {
+      toast({ title: 'Completa nombre y categoría', status: 'warning', duration: 2000 })
+      return
+    }
+    if (variants.length === 0 || variants.some((v) => !v.price)) {
+      toast({ title: 'Cada variante necesita precio', status: 'warning', duration: 2000 })
+      return
+    }
+    setSaving(true)
+    const imagesArr = form.images.split('\n').map((s) => s.trim()).filter(Boolean)
+    const variantsPayload = variants.map((v) => ({
+      id: v.id,
+      language: v.language,
+      price: parseFloat(v.price),
+      originalPrice: v.originalPrice ? parseFloat(v.originalPrice) : null,
+      stock: parseInt(v.stock),
+    }))
+    const body = {
+      name: form.name,
+      franchise: form.franchise,
+      type: form.type,
+      category: form.category,
+      description: form.description,
+      images: imagesArr,
+      featured: form.featured,
+      isNew: form.isNew,
+      metadata: form.type === 'singles' ? meta : {},
+      variants: variantsPayload,
+    }
+    try {
+      if (product) {
+        // Update base product
+        await fetch(`${API_URL}/api/admin/products/${product.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(body),
+        })
+        // Upsert variants: update existing, create new
+        for (const v of variantsPayload) {
+          if (v.id) {
+            await fetch(`${API_URL}/api/admin/products/${product.id}/variants/${v.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify(v),
+            })
+          } else {
+            await fetch(`${API_URL}/api/admin/products/${product.id}/variants`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify(v),
+            })
+          }
+        }
+        // Delete removed variants
+        const keptIds = variantsPayload.filter((v) => v.id).map((v) => v.id)
+        for (const v of product.variants ?? []) {
+          if (!keptIds.includes(v.id)) {
+            await fetch(`${API_URL}/api/admin/products/${product.id}/variants/${v.id}`, {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` },
+            })
+          }
+        }
+      } else {
+        const res = await fetch(`${API_URL}/api/admin/products`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(body),
+        })
+        if (!res.ok) throw new Error()
+      }
+      toast({ title: product ? 'Producto actualizado' : 'Producto creado', status: 'success', duration: 2000 })
+      onSaved()
+      onClose()
+    } catch {
+      toast({ title: 'Error al guardar', status: 'error', duration: 3000 })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside">
+      <ModalOverlay bg="blackAlpha.800" />
+      <ModalContent bg="#111111" border="1px solid #1e1e1e" borderRadius="xl">
+        <ModalHeader fontFamily="heading" fontSize="20px" color="white" letterSpacing="0.05em">
+          {product ? 'EDITAR PRODUCTO' : 'NUEVO PRODUCTO'}
+        </ModalHeader>
+        <ModalCloseButton color="gray.500" />
+
+        <ModalBody pb={4}>
+          <SimpleGrid columns={2} spacing={4}>
+            {/* Base fields */}
+            <FormControl gridColumn="1 / -1">
+              <FormLabel fontSize="12px" color="gray.500">Nombre *</FormLabel>
+              <Input bg="#0d0d0d" borderColor="#2a2a2a" color="white"
+                value={form.name} onChange={(e) => set('name', e.target.value)}
+                placeholder="Ej: Booster Box Scarlet & Violet"
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel fontSize="12px" color="gray.500">Franquicia *</FormLabel>
+              <Select bg="#0d0d0d" borderColor="#2a2a2a" color="white"
+                value={form.franchise} onChange={(e) => set('franchise', e.target.value)}
+              >
+                <option value="pokemon">Pokémon</option>
+                <option value="yugioh">Yu-Gi-Oh!</option>
+                <option value="onepiece">One Piece</option>
+              </Select>
+            </FormControl>
+            <FormControl>
+              <FormLabel fontSize="12px" color="gray.500">Tipo *</FormLabel>
+              <Select bg="#0d0d0d" borderColor="#2a2a2a" color="white"
+                value={form.type} onChange={(e) => set('type', e.target.value)}
+              >
+                <option value="sealed">Sellado</option>
+                <option value="singles">Singles</option>
+              </Select>
+            </FormControl>
+            <FormControl gridColumn="1 / -1">
+              <FormLabel fontSize="12px" color="gray.500">Categoría *</FormLabel>
+              <Input bg="#0d0d0d" borderColor="#2a2a2a" color="white"
+                value={form.category} onChange={(e) => set('category', e.target.value)}
+                placeholder="Ej: Booster Box, Starter Deck..."
+              />
+            </FormControl>
+            <FormControl gridColumn="1 / -1">
+              <FormLabel fontSize="12px" color="gray.500">Descripción</FormLabel>
+              <Textarea bg="#0d0d0d" borderColor="#2a2a2a" color="white" rows={3}
+                value={form.description} onChange={(e) => set('description', e.target.value)}
+              />
+            </FormControl>
+            <FormControl gridColumn="1 / -1">
+              <FormLabel fontSize="12px" color="gray.500">
+                URLs de imágenes
+                <Text as="span" color="gray.700" fontWeight={400} ml={2}>(una por línea)</Text>
+              </FormLabel>
+              <Textarea bg="#0d0d0d" borderColor="#2a2a2a" color="white" rows={2}
+                fontFamily="mono" fontSize="12px" value={form.images}
+                onChange={(e) => set('images', e.target.value)}
+              />
+            </FormControl>
+            <HStack spacing={6} gridColumn="1 / -1">
+              <FormControl display="flex" alignItems="center" gap={3} w="auto">
+                <Switch colorScheme="yellow" isChecked={form.featured}
+                  onChange={(e) => set('featured', e.target.checked)} />
+                <FormLabel mb={0} fontSize="13px" color="gray.400">Destacado</FormLabel>
+              </FormControl>
+              <FormControl display="flex" alignItems="center" gap={3} w="auto">
+                <Switch colorScheme="orange" isChecked={form.isNew}
+                  onChange={(e) => set('isNew', e.target.checked)} />
+                <FormLabel mb={0} fontSize="13px" color="gray.400">Nuevo</FormLabel>
+              </FormControl>
+            </HStack>
+          </SimpleGrid>
+
+          {/* Singles metadata */}
+          {form.type === 'singles' && (
+            <SinglesMetadataForm
+              franchise={form.franchise}
+              meta={meta}
+              onChange={setMeta}
+            />
+          )}
+
+          {/* Variants */}
+          <Divider borderColor="#1e1e1e" my={5} />
+          <HStack justify="space-between" mb={3}>
+            <Text fontSize="12px" color="gray.500" fontWeight={600} textTransform="uppercase" letterSpacing="0.1em">
+              Variantes por idioma
+            </Text>
+            <Button
+              size="xs" leftIcon={<FiPlus size={11} />} variant="ghost"
+              color="brand.400" _hover={{ bg: 'rgba(255,208,0,0.06)' }}
+              onClick={addVariant}
+              isDisabled={variants.length >= LANGUAGES.length}
+            >
+              Añadir idioma
+            </Button>
+          </HStack>
+
+          <VStack spacing={3} align="stretch">
+            {variants.map((v, i) => (
+              <Box key={i} bg="#0d0d0d" border="1px solid #2a2a2a" borderRadius="lg" p={4}>
+                <HStack justify="space-between" mb={3}>
+                  <Select
+                    size="sm" maxW="160px" bg="#111111" borderColor="#2a2a2a" color="white"
+                    value={v.language} onChange={(e) => setVariant(i, 'language', e.target.value)}
+                    textTransform="capitalize"
+                  >
+                    {LANGUAGES.map((l) => (
+                      <option key={l} value={l} disabled={variants.some((vv, ii) => ii !== i && vv.language === l)}>
+                        {l.charAt(0).toUpperCase() + l.slice(1)}
+                      </option>
+                    ))}
+                  </Select>
+                  {variants.length > 1 && (
+                    <IconButton
+                      aria-label="Eliminar variante"
+                      icon={<FiTrash2 size={13} />}
+                      size="xs" variant="ghost" colorScheme="red"
+                      onClick={() => removeVariant(i)}
+                    />
+                  )}
+                </HStack>
+                <SimpleGrid columns={3} spacing={3}>
+                  <FormControl>
+                    <FormLabel fontSize="11px" color="gray.600">Precio *</FormLabel>
+                    <NumberInput min={0} precision={2} value={v.price}
+                      onChange={(val) => setVariant(i, 'price', val)}>
+                      <NumberInputField bg="#161616" borderColor="#2a2a2a" color="white" />
+                    </NumberInput>
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel fontSize="11px" color="gray.600">Precio original</FormLabel>
+                    <NumberInput min={0} precision={2} value={v.originalPrice}
+                      onChange={(val) => setVariant(i, 'originalPrice', val)}>
+                      <NumberInputField bg="#161616" borderColor="#2a2a2a" color="white" placeholder="—" />
+                    </NumberInput>
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel fontSize="11px" color="gray.600">Stock</FormLabel>
+                    <NumberInput min={0} value={v.stock}
+                      onChange={(val) => setVariant(i, 'stock', val)}>
+                      <NumberInputField bg="#161616" borderColor="#2a2a2a" color="white" />
+                    </NumberInput>
+                  </FormControl>
+                </SimpleGrid>
+              </Box>
+            ))}
+          </VStack>
+        </ModalBody>
+
+        <ModalFooter borderTop="1px solid #1e1e1e" gap={3}>
+          <Button variant="ghost" onClick={onClose} size="sm" color="gray.500">Cancelar</Button>
+          <Button variant="primary" size="sm" isLoading={saving} onClick={handleSubmit}>
+            {product ? 'Guardar cambios' : 'Crear producto'}
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  )
+}

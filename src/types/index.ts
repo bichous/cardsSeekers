@@ -4,25 +4,46 @@ export type ProductType = 'sealed' | 'singles'
 
 export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'name-asc'
 
+export type Language = 'español' | 'inglés' | 'japonés' | 'portugués'
+
+export interface ProductVariant {
+  id: string
+  productId: string
+  language: Language
+  price: number
+  originalPrice?: number | null
+  stock: number
+}
+
 export interface Product {
   id: string
   name: string
   franchise: Franchise
   type: ProductType
   category: string
-  price: number
-  originalPrice?: number
   currency: string
-  stock: number
   images: string[]
   description: string
+  metadata?: Record<string, string>
   featured?: boolean
   isNew?: boolean
+  variants: ProductVariant[]
 }
 
 export interface CartItem {
   product: Product
+  variant: ProductVariant
   quantity: number
+}
+
+/** Devuelve la variante de menor precio (o la primera disponible) */
+export function getMinVariant(product: Product): ProductVariant {
+  return [...product.variants].sort((a, b) => a.price - b.price)[0]
+}
+
+/** Clave única de un item en el carrito */
+export function cartKey(productId: string, language: string): string {
+  return `${productId}__${language}`
 }
 
 export const FRANCHISE_CONFIG: Record<
@@ -53,10 +74,11 @@ export const FRANCHISE_CONFIG: Record<
 }
 
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat('es-ES', {
+  return new Intl.NumberFormat('es-MX', {
     style: 'currency',
-    currency: 'EUR',
-  }).format(price)
+    currency: 'MXN',
+    currencyDisplay: 'narrowSymbol',
+  }).format(price).replace('$', 'MX$')
 }
 
 export function getStockLabel(stock: number): { label: string; color: string } {

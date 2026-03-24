@@ -11,7 +11,7 @@ import {
 import { FiShoppingCart } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
 import type { Product } from '../types'
-import { FRANCHISE_CONFIG, formatPrice, getStockLabel } from '../types'
+import { FRANCHISE_CONFIG, formatPrice, getStockLabel, getMinVariant } from '../types'
 import { useCart } from '../context/CartContext'
 
 interface ProductCardProps {
@@ -21,8 +21,10 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart()
   const franchise = FRANCHISE_CONFIG[product.franchise]
-  const stock = getStockLabel(product.stock)
-  const isOutOfStock = product.stock === 0
+  const minVariant = getMinVariant(product)
+  const stock = getStockLabel(minVariant.stock)
+  const isOutOfStock = minVariant.stock === 0
+  const hasMultipleVariants = product.variants.length > 1
 
   return (
     <Box
@@ -46,7 +48,7 @@ export function ProductCard({ product }: ProductCardProps) {
         as={Link}
         to={`/producto/${product.id}`}
         position="relative"
-        sx={{ aspectRatio: '3/4' }}
+        sx={{ aspectRatio: '15/17' }}
         overflow="hidden"
         bg="#111111"
         display="block"
@@ -133,12 +135,15 @@ export function ProductCard({ product }: ProductCardProps) {
         <VStack align="stretch" spacing={2}>
           <HStack justify="space-between" align="baseline">
             <HStack spacing={1} align="baseline">
+              {hasMultipleVariants && (
+                <Text fontSize="11px" color="gray.600" fontWeight={400}>Desde</Text>
+              )}
               <Text fontSize="18px" fontWeight={700} color="brand.400" lineHeight={1}>
-                {formatPrice(product.price)}
+                {formatPrice(minVariant.price)}
               </Text>
-              {product.originalPrice && (
+              {minVariant.originalPrice && (
                 <Text fontSize="12px" color="gray.600" textDecoration="line-through">
-                  {formatPrice(product.originalPrice)}
+                  {formatPrice(minVariant.originalPrice)}
                 </Text>
               )}
             </HStack>
@@ -154,7 +159,7 @@ export function ProductCard({ product }: ProductCardProps) {
             leftIcon={<FiShoppingCart size={13} />}
             fontSize="12px"
             h="34px"
-            onClick={() => !isOutOfStock && addToCart(product)}
+            onClick={() => !isOutOfStock && addToCart(product, minVariant)}
             w="full"
             aria-label={isOutOfStock ? 'Producto agotado' : `Añadir ${product.name} al carrito`}
           >

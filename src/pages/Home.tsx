@@ -13,8 +13,8 @@ import {
 } from '@chakra-ui/react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FiArrowRight, FiZap } from 'react-icons/fi'
-import { products, getFeaturedProducts } from '../data/products'
 import { FRANCHISE_CONFIG, type Franchise } from '../types'
+import { useProducts } from '../hooks/useProducts'
 import { ProductCard } from '../components/ProductCard'
 
 const FRANCHISE_CARDS: { id: Franchise; description: string }[] = [
@@ -41,7 +41,8 @@ const STATS = [
 
 export function Home() {
   const navigate = useNavigate()
-  const featured = getFeaturedProducts().slice(0, 8)
+  const allProducts = useProducts()
+  const featured = allProducts.filter((p) => p.featured).slice(0, 8)
 
   return (
     <Box>
@@ -206,7 +207,7 @@ export function Home() {
                       {fc.description}
                     </Text>
                     <Text fontSize="11px" color="gray.700" mt={2}>
-                      {products.filter((p) => p.franchise === fc.id).length} productos disponibles
+                      {allProducts.filter((p) => p.franchise === fc.id).length} productos disponibles
                     </Text>
                   </Box>
                 )
@@ -237,7 +238,7 @@ export function Home() {
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={5}>
             {FRANCHISE_CARDS.map((fc) => {
               const cfg = FRANCHISE_CONFIG[fc.id]
-              const count = products.filter((p) => p.franchise === fc.id).length
+              const count = allProducts.filter((p) => p.franchise === fc.id).length
               return (
                 <Box
                   key={fc.id}

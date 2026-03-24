@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   Box,
@@ -24,8 +24,81 @@ import {
 } from '@chakra-ui/react'
 import { ChevronRightIcon } from '@chakra-ui/icons'
 import { FiShoppingCart, FiArrowLeft } from 'react-icons/fi'
-import { getProductById, products } from '../data/products'
-import { FRANCHISE_CONFIG, formatPrice, getStockLabel } from '../types'
+import { getProductById } from '../data/products'
+
+const CONDITION_LABELS: Record<string, string> = {
+  NM: 'Near Mint (NM)', LP: 'Lightly Played (LP)', MP: 'Moderately Played (MP)',
+  HP: 'Heavily Played (HP)', Damaged: 'Damaged',
+}
+
+function MetaRow({ label, value }: { label: string; value?: string }) {
+  if (!value) return null
+  return (
+    <HStack justify="space-between" py={2} borderBottom="1px solid #1a1a1a">
+      <Text fontSize="12px" color="gray.600">{label}</Text>
+      <Text fontSize="12px" color="gray.300" fontWeight={500} textAlign="right" maxW="60%">{value}</Text>
+    </HStack>
+  )
+}
+
+function CardMetadataBlock({ franchise, meta }: { franchise: string; meta: Record<string, string> }) {
+  const rows: { label: string; value?: string }[] = []
+
+  if (meta.condition) rows.push({ label: 'Condición', value: CONDITION_LABELS[meta.condition] ?? meta.condition })
+
+  if (franchise === 'yugioh') {
+    rows.push(
+      { label: 'Expansion', value: meta.expansion },
+      { label: 'Rarity', value: meta.rarity },
+      { label: 'Attribute', value: meta.attribute },
+      { label: 'Monster / Card Type', value: meta.monsterType },
+      { label: 'Level', value: meta.level },
+      { label: 'ATK', value: meta.atk },
+      { label: 'DEF', value: meta.def },
+      { label: 'Number (ES)', value: meta.numberES },
+      { label: 'Number (EN)', value: meta.numberEN },
+    )
+  } else if (franchise === 'pokemon') {
+    rows.push(
+      { label: 'Expansion', value: meta.expansion },
+      { label: 'Card Number', value: meta.cardNumber },
+      { label: 'Rarity', value: meta.rarity },
+      { label: 'Card Type', value: meta.cardType },
+      { label: 'HP', value: meta.hp },
+      { label: 'Stage', value: meta.stage },
+      { label: 'Artist', value: meta.artist },
+      { label: 'Card Text', value: meta.cardText },
+    )
+  } else if (franchise === 'onepiece') {
+    rows.push(
+      { label: 'Expansion', value: meta.expansion },
+      { label: 'Rarity', value: meta.rarity },
+      { label: 'Number', value: meta.number },
+      { label: 'Color', value: meta.color },
+      { label: 'Card Type', value: meta.cardType },
+      { label: 'Cost', value: meta.cost },
+      { label: 'Power', value: meta.power },
+      { label: 'Subtype(s)', value: meta.subtypes },
+      { label: 'Attribute', value: meta.attribute },
+      { label: 'Artist', value: meta.artist },
+    )
+  }
+
+  const visible = rows.filter(r => r.value)
+  if (!visible.length) return null
+
+  return (
+    <Box bg="#111111" borderRadius="xl" p={4} border="1px solid #1e1e1e">
+      <Text fontSize="10px" color="gray.700" textTransform="uppercase" letterSpacing="0.1em" mb={2}>
+        Datos de la carta
+      </Text>
+      {visible.map(r => <MetaRow key={r.label} label={r.label} value={r.value} />)}
+    </Box>
+  )
+}
+import { FRANCHISE_CONFIG, formatPrice, getStockLabel, type ProductVariant, type Product } from '../types'
+import { fetchProductById } from '../hooks/useProducts'
+import { useProducts } from '../hooks/useProducts'
 import { useCart } from '../context/CartContext'
 import { ProductGallery } from '../components/ProductGallery'
 import { ProductCard } from '../components/ProductCard'
@@ -36,8 +109,24 @@ export function ProductDetail() {
   const { addToCart } = useCart()
   const [quantity, setQuantity] = useState(1)
   const [added, setAdded] = useState(false)
+  const [product, setProduct] = useState<Product | null>(() => getProductById(id ?? '') ?? null)
+  const allProducts = useProducts()
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
+    product ? product.variants[0] : null
+  )
 
-  const product = getProductById(id ?? '')
+  useEffect(() => { window.scrollTo(0, 0) }, [id])
+
+  // Si no está en mock, buscar en la BD
+  useEffect(() => {
+    if (product) return
+    fetchProductById(id ?? '').then((p) => {
+      if (p) {
+        setProduct(p)
+        setSelectedVariant(p.variants[0] ?? null)
+      }
+    })
+  }, [id, product])
 
   if (!product) {
     return (
@@ -56,23 +145,40 @@ export function ProductDetail() {
   }
 
   const franchise = FRANCHISE_CONFIG[product.franchise]
-  const stock = getStockLabel(product.stock)
-  const isOutOfStock = product.stock === 0
+  const variant = selectedVariant ?? product.variants[0]
+  const stock = getStockLabel(variant.stock)
+  const isOutOfStock = variant.stock === 0
 
   const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) addToCart(product)
+    for (let i = 0; i < quantity; i++) addToCart(product, variant)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
 
-  // Related products: same franchise, different product
-  const related = products
+  const related = allProducts
     .filter((p) => p.franchise === product.franchise && p.id !== product.id)
     .slice(0, 4)
 
   return (
     <Box pt="88px" pb={20} minH="100vh">
       <Container maxW="1280px">
+        {/* Go back */}
+        <Box
+          as="button"
+          display="inline-flex"
+          alignItems="center"
+          gap={2}
+          mb={6}
+          fontSize="13px"
+          color="gray.500"
+          _hover={{ color: 'brand.400' }}
+          transition="color 0.15s"
+          onClick={() => navigate(-1)}
+        >
+          <FiArrowLeft size={14} />
+          Volver
+        </Box>
+
         {/* Breadcrumb */}
         <Breadcrumb
           separator={<ChevronRightIcon color="gray.700" />}
@@ -110,7 +216,7 @@ export function ProductDetail() {
 
         {/* Main content */}
         <Grid
-          templateColumns={{ base: '1fr', lg: '1fr 1fr' }}
+          templateColumns={{ base: '1fr', lg: '3fr 5fr' }}
           gap={{ base: 8, lg: 14 }}
           alignItems="flex-start"
         >
@@ -173,6 +279,33 @@ export function ProductDetail() {
               </Heading>
             </Box>
 
+            {/* Language selector */}
+            {product.variants.length > 1 && (
+              <VStack align="flex-start" spacing={2}>
+                <Text fontSize="11px" color="gray.600" fontWeight={600} textTransform="uppercase" letterSpacing="0.08em">
+                  Idioma
+                </Text>
+                <HStack spacing={2} flexWrap="wrap">
+                  {product.variants.map((v) => (
+                    <Button
+                      key={v.language}
+                      size="sm"
+                      variant={variant.language === v.language ? 'primary' : 'outline_brand'}
+                      onClick={() => { setSelectedVariant(v); setQuantity(1) }}
+                      textTransform="capitalize"
+                      fontSize="12px"
+                      h="32px"
+                      px={4}
+                      opacity={v.stock === 0 ? 0.4 : 1}
+                    >
+                      {v.language}
+                      {v.stock === 0 && ' (agotado)'}
+                    </Button>
+                  ))}
+                </HStack>
+              </VStack>
+            )}
+
             {/* Price */}
             <VStack align="flex-start" spacing={1}>
               <HStack spacing={3} align="baseline">
@@ -183,17 +316,17 @@ export function ProductDetail() {
                   lineHeight={1}
                   letterSpacing="0.02em"
                 >
-                  {formatPrice(product.price)}
+                  {formatPrice(variant.price)}
                 </Text>
-                {product.originalPrice && (
+                {variant.originalPrice && (
                   <Text fontSize="18px" color="gray.600" textDecoration="line-through">
-                    {formatPrice(product.originalPrice)}
+                    {formatPrice(variant.originalPrice)}
                   </Text>
                 )}
               </HStack>
-              {product.originalPrice && (
+              {variant.originalPrice && (
                 <Badge bg="accent.400" color="white" fontSize="11px" px={2} borderRadius="full">
-                  -{Math.round((1 - product.price / product.originalPrice) * 100)}% DESCUENTO
+                  -{Math.round((1 - variant.price / variant.originalPrice) * 100)}% DESCUENTO
                 </Badge>
               )}
             </VStack>
@@ -224,7 +357,7 @@ export function ProductDetail() {
                   <NumberInput
                     value={quantity}
                     min={1}
-                    max={product.stock}
+                    max={variant.stock}
                     onChange={(_, val) => setQuantity(val)}
                     w="110px"
                     size="md"
@@ -263,7 +396,7 @@ export function ProductDetail() {
                 </HStack>
 
                 <Text fontSize="11px" color="gray.700" textAlign="center">
-                  Subtotal: {formatPrice(product.price * quantity)}
+                  Subtotal: {formatPrice(variant.price * quantity)}
                 </Text>
               </VStack>
             )}
@@ -306,6 +439,11 @@ export function ProductDetail() {
                 ))}
               </SimpleGrid>
             </Box>
+
+            {/* Singles metadata */}
+            {product.type === 'singles' && product.metadata && Object.keys(product.metadata).length > 0 && (
+              <CardMetadataBlock franchise={product.franchise} meta={product.metadata} />
+            )}
           </VStack>
         </Grid>
 

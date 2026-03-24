@@ -10,9 +10,9 @@ import {
 } from '@chakra-ui/react'
 import { useSearchParams } from 'react-router-dom'
 import { FiPackage } from 'react-icons/fi'
-import { products } from '../data/products'
 import type { Franchise, ProductType, SortOption } from '../types'
-import { FRANCHISE_CONFIG } from '../types'
+import { FRANCHISE_CONFIG, getMinVariant } from '../types'
+import { useProducts } from '../hooks/useProducts'
 import { ProductCard } from '../components/ProductCard'
 import { FilterBar } from '../components/FilterBar'
 
@@ -47,8 +47,10 @@ export function Catalog() {
     setFilters((prev) => ({ ...prev, ...partial }))
   }
 
+  const allProducts = useProducts()
+
   const filteredProducts = useMemo(() => {
-    let result = [...products]
+    let result = [...allProducts]
 
     if (filters.franchise !== 'all') {
       result = result.filter((p) => p.franchise === filters.franchise)
@@ -68,10 +70,10 @@ export function Catalog() {
 
     switch (filters.sort) {
       case 'price-asc':
-        result.sort((a, b) => a.price - b.price)
+        result.sort((a, b) => getMinVariant(a).price - getMinVariant(b).price)
         break
       case 'price-desc':
-        result.sort((a, b) => b.price - a.price)
+        result.sort((a, b) => getMinVariant(b).price - getMinVariant(a).price)
         break
       case 'name-asc':
         result.sort((a, b) => a.name.localeCompare(b.name, 'es'))
@@ -82,7 +84,7 @@ export function Catalog() {
     }
 
     return result
-  }, [filters])
+  }, [filters, allProducts])
 
   const activeFranchiseName =
     filters.franchise !== 'all' ? FRANCHISE_CONFIG[filters.franchise].label : null

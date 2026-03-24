@@ -1,16 +1,37 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { GoogleOAuthProvider } from '@react-oauth/google'
 import { CartProvider } from './context/CartContext'
+import { AuthProvider } from './context/AuthContext'
 import { Header } from './components/Header'
 import { Footer } from './components/Footer'
 import { CartDrawer } from './components/CartDrawer'
+import { AdminGuard } from './components/AdminGuard'
+import { AdminLayout } from './pages/admin/AdminLayout'
+import { ProductsPage } from './pages/admin/ProductsPage'
+import { OrdersPage } from './pages/admin/OrdersPage'
 import { Home } from './pages/Home'
 import { Catalog } from './pages/Catalog'
 import { ProductDetail } from './pages/ProductDetail'
 import { CartPage } from './pages/CartPage'
 import { CheckoutPage } from './pages/CheckoutPage'
+import { LoginPage } from './pages/LoginPage'
 import { Box } from '@chakra-ui/react'
 
-function AppContent() {
+function AdminRoutes() {
+  return (
+    <AdminGuard>
+      <AdminLayout>
+        <Routes>
+          <Route path="productos" element={<ProductsPage />} />
+          <Route path="pedidos" element={<OrdersPage />} />
+          <Route index element={<ProductsPage />} />
+        </Routes>
+      </AdminLayout>
+    </AdminGuard>
+  )
+}
+
+function StoreRoutes() {
   return (
     <>
       <Header />
@@ -22,6 +43,7 @@ function AppContent() {
           <Route path="/producto/:id" element={<ProductDetail />} />
           <Route path="/carrito" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/login" element={<LoginPage />} />
         </Routes>
       </Box>
       <Footer />
@@ -31,10 +53,17 @@ function AppContent() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <CartProvider>
-        <AppContent />
-      </CartProvider>
-    </BrowserRouter>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''}>
+      <BrowserRouter>
+        <AuthProvider>
+          <CartProvider>
+            <Routes>
+              <Route path="/admin/*" element={<AdminRoutes />} />
+              <Route path="/*" element={<StoreRoutes />} />
+            </Routes>
+          </CartProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   )
 }

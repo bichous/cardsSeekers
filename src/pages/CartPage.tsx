@@ -17,16 +17,17 @@ import { DeleteIcon, AddIcon, MinusIcon } from '@chakra-ui/icons'
 import { Link, useNavigate } from 'react-router-dom'
 import { FiShoppingBag, FiArrowLeft, FiArrowRight } from 'react-icons/fi'
 import { useCart } from '../context/CartContext'
-import { FRANCHISE_CONFIG, formatPrice } from '../types'
+import { FRANCHISE_CONFIG, formatPrice, cartKey } from '../types'
+import { CheckoutStepper } from '../components/CheckoutStepper'
 
-const SHIPPING_THRESHOLD = 50
+const SHIPPING_THRESHOLD = 999
 
 export function CartPage() {
   const { state, removeFromCart, updateQty, total, itemCount, clearCart } = useCart()
   const navigate = useNavigate()
 
   const isFreeShipping = total >= SHIPPING_THRESHOLD
-  const shippingCost = isFreeShipping ? 0 : 4.99
+  const shippingCost = isFreeShipping ? 0 : 99
   const orderTotal = total + shippingCost
 
   if (state.items.length === 0) {
@@ -64,6 +65,8 @@ export function CartPage() {
   return (
     <Box pt="88px" pb={20} minH="100vh">
       <Container maxW="1100px">
+        <CheckoutStepper currentStep={1} />
+
         {/* Header */}
         <Flex justify="space-between" align="baseline" mb={8} flexWrap="wrap" gap={3}>
           <VStack align="flex-start" spacing={0}>
@@ -95,9 +98,10 @@ export function CartPage() {
           <VStack align="stretch" spacing={0} divider={<Divider borderColor="#1e1e1e" />}>
             {state.items.map((item) => {
               const franchise = FRANCHISE_CONFIG[item.product.franchise]
+              const key = cartKey(item.product.id, item.variant.language)
               return (
                 <HStack
-                  key={item.product.id}
+                  key={key}
                   p={4}
                   spacing={4}
                   align="flex-start"
@@ -151,7 +155,7 @@ export function CartPage() {
                       {item.product.name}
                     </Text>
                     <Text fontSize="12px" color="gray.600">
-                      {item.product.category}
+                      {item.product.category} · <Text as="span" textTransform="capitalize">{item.variant.language}</Text>
                     </Text>
 
                     <Flex align="center" justify="space-between" mt={2} flexWrap="wrap" gap={2}>
@@ -168,7 +172,7 @@ export function CartPage() {
                           border="1px solid #2a2a2a"
                           color="gray.400"
                           _hover={{ borderColor: 'brand.400', color: 'brand.400' }}
-                          onClick={() => updateQty(item.product.id, item.quantity - 1)}
+                          onClick={() => updateQty(key, item.quantity - 1)}
                         />
                         <Text
                           fontSize="14px"
@@ -189,15 +193,15 @@ export function CartPage() {
                           bg="#1e1e1e"
                           border="1px solid #2a2a2a"
                           color="gray.400"
-                          isDisabled={item.quantity >= item.product.stock}
+                          isDisabled={item.quantity >= item.variant.stock}
                           _hover={{ borderColor: 'brand.400', color: 'brand.400' }}
-                          onClick={() => updateQty(item.product.id, item.quantity + 1)}
+                          onClick={() => updateQty(key, item.quantity + 1)}
                         />
                       </HStack>
 
                       <HStack spacing={3}>
                         <Text fontSize="16px" fontWeight={700} color="brand.400">
-                          {formatPrice(item.product.price * item.quantity)}
+                          {formatPrice(item.variant.price * item.quantity)}
                         </Text>
                         <IconButton
                           aria-label="Eliminar"
@@ -206,7 +210,7 @@ export function CartPage() {
                           variant="ghost"
                           color="gray.600"
                           _hover={{ color: 'accent.400', bg: 'transparent' }}
-                          onClick={() => removeFromCart(item.product.id)}
+                          onClick={() => removeFromCart(key)}
                         />
                       </HStack>
                     </Flex>

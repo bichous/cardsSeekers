@@ -21,7 +21,7 @@ import { AddIcon, MinusIcon, DeleteIcon } from '@chakra-ui/icons'
 import { FiShoppingBag } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
-import { FRANCHISE_CONFIG, formatPrice } from '../types'
+import { FRANCHISE_CONFIG, formatPrice, cartKey } from '../types'
 
 export function CartDrawer() {
   const { state, closeCart, removeFromCart, updateQty, total, itemCount } = useCart()
@@ -88,8 +88,9 @@ export function CartDrawer() {
             <VStack align="stretch" spacing={0} divider={<Divider borderColor="#1e1e1e" />}>
               {state.items.map((item) => {
                 const franchise = FRANCHISE_CONFIG[item.product.franchise]
+                const key = cartKey(item.product.id, item.variant.language)
                 return (
-                  <HStack key={item.product.id} p={4} spacing={3} align="flex-start">
+                  <HStack key={key} p={4} spacing={3} align="flex-start">
                     {/* Image */}
                     <Box
                       w="64px"
@@ -123,8 +124,11 @@ export function CartDrawer() {
                       <Text fontSize="12px" fontWeight={600} color="gray.200" lineHeight={1.3} noOfLines={2}>
                         {item.product.name}
                       </Text>
+                      <Text fontSize="10px" color="gray.600" textTransform="capitalize">
+                        {item.variant.language}
+                      </Text>
                       <Text fontSize="14px" fontWeight={700} color="brand.400">
-                        {formatPrice(item.product.price * item.quantity)}
+                        {formatPrice(item.variant.price * item.quantity)}
                       </Text>
 
                       {/* Qty controls */}
@@ -140,7 +144,7 @@ export function CartDrawer() {
                           border="1px solid #2a2a2a"
                           color="gray.400"
                           _hover={{ borderColor: 'brand.400', color: 'brand.400' }}
-                          onClick={() => updateQty(item.product.id, item.quantity - 1)}
+                          onClick={() => updateQty(key, item.quantity - 1)}
                         />
                         <Text
                           fontSize="13px"
@@ -161,9 +165,9 @@ export function CartDrawer() {
                           bg="#1e1e1e"
                           border="1px solid #2a2a2a"
                           color="gray.400"
-                          isDisabled={item.quantity >= item.product.stock}
+                          isDisabled={item.quantity >= item.variant.stock}
                           _hover={{ borderColor: 'brand.400', color: 'brand.400' }}
-                          onClick={() => updateQty(item.product.id, item.quantity + 1)}
+                          onClick={() => updateQty(key, item.quantity + 1)}
                         />
                         <IconButton
                           aria-label="Eliminar del carrito"
@@ -176,7 +180,7 @@ export function CartDrawer() {
                           bg="transparent"
                           color="gray.600"
                           _hover={{ color: '#FF6B00', bg: 'transparent' }}
-                          onClick={() => removeFromCart(item.product.id)}
+                          onClick={() => removeFromCart(key)}
                         />
                       </HStack>
                     </VStack>
