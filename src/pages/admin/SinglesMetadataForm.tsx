@@ -44,6 +44,12 @@ export interface SinglesMeta {
   number?: string
 }
 
+// ── Feature flag ───────────────────────────────────────────────────────────
+
+const USE_JUSTTCG = import.meta.env.VITE_JUSTTCG === 'true'
+const JUSTTCG_KEY = import.meta.env.VITE_JUSTTCG_KEY ?? ''
+const JUSTTCG_BASE = 'https://api.justtcg.com/v1'
+
 // ── API types ──────────────────────────────────────────────────────────────
 
 interface YGOCard {
@@ -73,23 +79,90 @@ interface PokemonCard {
   attacks?: Array<{ name: string; text: string; damage: string }>
 }
 
+interface JustTCGCard {
+  id: string
+  name: string
+  game: string
+  set: string
+  set_name: string
+  number?: string
+  rarity?: string
+  variants?: Array<{ id: string; condition: string; printing: string; price: number }>
+}
+
 interface SearchResult {
   name: string
   subtitle: string
-  raw: YGOCard | PokemonCard
+  raw: YGOCard | PokemonCard | JustTCGCard
+  source: 'legacy' | 'justtcg'
 }
 
-// ── API fetch helpers ──────────────────────────────────────────────────────
+// ── JustTCG helpers ────────────────────────────────────────────────────────
+
+const JUSTTCG_GAME: Record<string, string> = {
+  yugioh: 'yugioh',
+  pokemon: 'pokemon',
+  onepiece: 'one-piece-card-game',
+}
+
+async function searchJustTCG(query: string, franchise: string): Promise<SearchResult[]> {
+  const game = JUSTTCG_GAME[franchise]
+  if (!game) return []
+  const url = new URL(`${JUSTTCG_BASE}/cards`)
+  url.searchParams.set('q', query.trim())
+  url.searchParams.set('game', game)
+  const res = await fetch(url.toString(), {
+    headers: { 'X-API-Key': JUSTTCG_KEY },
+  })
+  if (!res.ok) return []
+  const data = await res.json()
+  return (data.data ?? []).slice(0, 8).map((c: JustTCGCard) => {
+    const numberPart = c.number && c.number !== 'N/A' ? ` · ${c.number}` : ''
+    return {
+      name: c.name,
+      subtitle: `${c.set_name}${numberPart}${c.rarity ? ' · ' + c.rarity : ''}`,
+      raw: c,
+      source: 'justtcg' as const,
+    }
+  })
+}
+
+function mapJustTCG(card: JustTCGCard, franchise: string, existing: SinglesMeta): SinglesMeta {
+  const hasNumber = card.number && card.number !== 'N/A'
+  if (franchise === 'yugioh') {
+    return {
+      ...existing,
+      expansion: card.set_name,
+      rarity: card.rarity ?? existing.rarity,
+      numberEN: hasNumber ? card.number : existing.numberEN,
+    }
+  }
+  if (franchise === 'pokemon') {
+    return {
+      ...existing,
+      expansion: card.set_name,
+      rarity: card.rarity ?? existing.rarity,
+      cardNumber: hasNumber ? card.number : existing.cardNumber,
+    }
+  }
+  // onepiece
+  return {
+    ...existing,
+    expansion: card.set_name,
+    rarity: card.rarity ?? existing.rarity,
+    number: hasNumber ? card.number : existing.number,
+  }
+}
+
+// ── Legacy API fetch helpers ───────────────────────────────────────────────
 
 async function searchYGO(query: string): Promise<SearchResult[]> {
-  // Detect optional set hint after a " - " separator: "dark magician - LOB"
   const [namePart, setPart] = query.split(/\s+-\s+/)
   const url = new URL('https://db.ygoprodeck.com/api/v7/cardinfo.php')
   url.searchParams.set('fname', namePart.trim())
   url.searchParams.set('num', '8')
   url.searchParams.set('offset', '0')
   if (setPart?.trim()) url.searchParams.set('cardset', setPart.trim())
-
   const res = await fetch(url.toString())
   if (!res.ok) return []
   const data = await res.json()
@@ -97,6 +170,7 @@ async function searchYGO(query: string): Promise<SearchResult[]> {
     name: c.name,
     subtitle: `${c.type} · ${c.card_sets?.[0]?.set_name ?? '—'}`,
     raw: c,
+    source: 'legacy' as const,
   }))
 }
 
@@ -109,12 +183,10 @@ async function searchYGO(query: string): Promise<SearchResult[]> {
  *   "psyduck 175 pokemon 151" → name:"psyduck*" number:175 set.name:"*151*"
  */
 function buildPokemonQuery(query: string): string {
-  // Match: <name words> <card number> [set hint...]
   const match = query.trim().match(/^(.*?)\s+(\d+)(?:\s+(.*))?$/)
   if (match && match[1].trim()) {
     const name = match[1].trim()
     const number = match[2]
-    // Strip generic words like "pokemon" since the set is already implied
     const setHint = (match[3] ?? '').replace(/\bpokemon\b/gi, '').trim()
     const parts = [`name:"${name}*"`, `number:${number}`]
     if (setHint) parts.push(`set.name:"*${setHint}*"`)
@@ -134,10 +206,11 @@ async function searchPokemon(query: string): Promise<SearchResult[]> {
     name: c.name,
     subtitle: `${c.set.name} #${c.number} · ${c.rarity ?? ''}`,
     raw: c,
+    source: 'legacy' as const,
   }))
 }
 
-// ── Meta mappers ───────────────────────────────────────────────────────────
+// ── Meta mappers (legacy) ──────────────────────────────────────────────────
 
 function mapYGO(card: YGOCard, existing: SinglesMeta): SinglesMeta {
   const firstSet = card.card_sets?.[0]
@@ -181,7 +254,7 @@ function mapPokemon(card: PokemonCard, existing: SinglesMeta): SinglesMeta {
   }
 }
 
-// ── Product name builders ──────────────────────────────────────────────────
+// ── Product name builders (legacy) ────────────────────────────────────────
 
 /** "Psyduck - 175/165 - SV: Scarlet & Violet 151 (MEW)" */
 function buildPokemonProductName(card: PokemonCard): string {
@@ -267,10 +340,14 @@ export function SinglesMetadataForm({ franchise, meta, onChange, onCardSelect }:
     const timer = setTimeout(async () => {
       setLoading(true)
       try {
-        const data =
-          franchise === 'yugioh'
-            ? await searchYGO(query)
-            : await searchPokemon(query)
+        let data: SearchResult[]
+        if (USE_JUSTTCG) {
+          data = await searchJustTCG(query, franchise)
+        } else if (franchise === 'yugioh') {
+          data = await searchYGO(query)
+        } else {
+          data = await searchPokemon(query)
+        }
         setResults(data)
         setShowDropdown(true)
       } catch {
@@ -288,7 +365,20 @@ export function SinglesMetadataForm({ franchise, meta, onChange, onCardSelect }:
     let category: string
     let imageUrls: string[] = []
 
-    if (franchise === 'yugioh') {
+    if (result.source === 'justtcg') {
+      const card = result.raw as JustTCGCard
+      updated = mapJustTCG(card, franchise, meta)
+      const hasNumber = card.number && card.number !== 'N/A'
+      if (franchise === 'yugioh') {
+        const parts = [card.name, card.rarity, card.set_name, hasNumber ? card.number : null]
+        productName = parts.filter(Boolean).join(' - ')
+      } else {
+        productName = hasNumber
+          ? `${card.name} - ${card.number} - ${card.set_name}`
+          : `${card.name} - ${card.set_name}`
+      }
+      category = card.set_name
+    } else if (franchise === 'yugioh') {
       const card = result.raw as YGOCard
       updated = mapYGO(card, meta)
       productName = buildYGOProductName(card)
@@ -311,7 +401,10 @@ export function SinglesMetadataForm({ franchise, meta, onChange, onCardSelect }:
     setResults([])
   }
 
-  const showSearch = franchise === 'yugioh' || franchise === 'pokemon'
+  // JustTCG soporta las 3 franquicias; las APIs legacy solo YGO y Pokémon
+  const showSearch = USE_JUSTTCG
+    ? franchise === 'yugioh' || franchise === 'pokemon' || franchise === 'onepiece'
+    : franchise === 'yugioh' || franchise === 'pokemon'
 
   return (
     <>

@@ -23,10 +23,11 @@ import {
   Box,
   Divider,
   Image,
+  Spinner,
   useToast,
 } from '@chakra-ui/react'
-import { useState, useEffect } from 'react'
-import { FiPlus, FiTrash2, FiX } from 'react-icons/fi'
+import { useState, useEffect, useRef } from 'react'
+import { FiPlus, FiTrash2, FiX, FiUpload, FiLink } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext'
 import type { AdminProduct } from './ProductsPage'
 import { SinglesMetadataForm, type SinglesMeta } from './SinglesMetadataForm'
@@ -37,25 +38,163 @@ function ImageSection({
   form,
   set,
   removeImage,
+  token,
 }: {
   form: typeof EMPTY_FORM
   set: (field: keyof typeof EMPTY_FORM, value: string | boolean) => void
   removeImage: (i: number) => void
+  token: string | null
 }) {
+  const [uploadMode, setUploadMode] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const toast = useToast()
+
+  const currentUrls = form.images.split('\n').filter(Boolean)
+
+  const uploadFiles = async (files: FileList | File[]) => {
+    const arr = Array.from(files).filter((f) => f.type.startsWith('image/'))
+    if (!arr.length) return
+    setUploading(true)
+    const newUrls: string[] = []
+    for (const file of arr) {
+      const fd = new FormData()
+      fd.append('file', file)
+      try {
+        const res = await fetch(`${API_URL}/api/upload`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        })
+        if (!res.ok) throw new Error()
+        const { url } = await res.json()
+        newUrls.push(url)
+      } catch {
+        toast({ title: `Error subiendo ${file.name}`, status: 'error', duration: 2500 })
+      }
+    }
+    if (newUrls.length) {
+      const merged = [...currentUrls, ...newUrls].join('\n')
+      set('images', merged)
+    }
+    setUploading(false)
+  }
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragging(false)
+    if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files)
+  }
+
   return (
     <FormControl gridColumn="1 / -1" mt={4}>
-      <FormLabel fontSize="12px" color="gray.500">
-        URLs de imágenes
-        <Text as="span" color="gray.700" fontWeight={400} ml={2}>(una por línea)</Text>
-      </FormLabel>
-      <Textarea
-        bg="#0d0d0d" borderColor="#2a2a2a" color="white" rows={2}
-        fontFamily="mono" fontSize="12px" value={form.images}
-        onChange={(e) => set('images', e.target.value)}
-      />
-      {form.images.trim() && (
-        <HStack mt={2} spacing={2} flexWrap="wrap">
-          {form.images.split('\n').filter(Boolean).map((url, i) => (
+      {/* Header con toggle */}
+      <HStack justify="space-between" mb={2}>
+        <FormLabel fontSize="12px" color="gray.500" mb={0}>Imágenes</FormLabel>
+        <HStack spacing={2}>
+          <Box
+            as="button"
+            type="button"
+            display="flex"
+            alignItems="center"
+            gap="6px"
+            px={3}
+            h="28px"
+            borderRadius="full"
+            fontSize="11px"
+            fontWeight={600}
+            border="1px solid"
+            transition="all 0.15s"
+            bg={!uploadMode ? 'brand.400' : 'transparent'}
+            borderColor={!uploadMode ? 'brand.400' : '#2a2a2a'}
+            color={!uploadMode ? '#0d0d0d' : 'gray.500'}
+            onClick={() => setUploadMode(false)}
+          >
+            <FiLink size={11} /> URL
+          </Box>
+          <Box
+            as="button"
+            type="button"
+            display="flex"
+            alignItems="center"
+            gap="6px"
+            px={3}
+            h="28px"
+            borderRadius="full"
+            fontSize="11px"
+            fontWeight={600}
+            border="1px solid"
+            transition="all 0.15s"
+            bg={uploadMode ? 'brand.400' : 'transparent'}
+            borderColor={uploadMode ? 'brand.400' : '#2a2a2a'}
+            color={uploadMode ? '#0d0d0d' : 'gray.500'}
+            onClick={() => setUploadMode(true)}
+          >
+            <FiUpload size={11} /> Subir archivo
+          </Box>
+        </HStack>
+      </HStack>
+
+      {/* Modo URL */}
+      {!uploadMode && (
+        <Textarea
+          bg="#0d0d0d" borderColor="#2a2a2a" color="white" rows={2}
+          fontFamily="mono" fontSize="12px" value={form.images}
+          placeholder="https://ejemplo.com/imagen.jpg (una por línea)"
+          onChange={(e) => set('images', e.target.value)}
+        />
+      )}
+
+      {/* Modo Upload */}
+      {uploadMode && (
+        <Box
+          border="2px dashed"
+          borderColor={dragging ? 'brand.400' : '#2a2a2a'}
+          borderRadius="xl"
+          bg={dragging ? 'rgba(255,208,0,0.04)' : '#0d0d0d'}
+          transition="all 0.15s"
+          p={6}
+          textAlign="center"
+          onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={onDrop}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            style={{ display: 'none' }}
+            onChange={(e) => e.target.files && uploadFiles(e.target.files)}
+          />
+          {uploading ? (
+            <VStack spacing={2}>
+              <Spinner size="sm" color="brand.400" />
+              <Text fontSize="12px" color="gray.500">Subiendo...</Text>
+            </VStack>
+          ) : (
+            <VStack spacing={2}>
+              <FiUpload size={20} color="#444" />
+              <Text fontSize="12px" color="gray.500">
+                Arrastra imágenes aquí
+              </Text>
+              <Button
+                size="xs"
+                variant="outline_brand"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Seleccionar archivos
+              </Button>
+            </VStack>
+          )}
+        </Box>
+      )}
+
+      {/* Previews (ambos modos) */}
+      {currentUrls.length > 0 && (
+        <HStack mt={3} spacing={2} flexWrap="wrap">
+          {currentUrls.map((url, i) => (
             <Box key={i} position="relative">
               <Image
                 src={url}
@@ -365,7 +504,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
             )}
 
             {/* Imágenes — solo sealed (para singles va abajo de Datos de carta) */}
-            {form.type !== 'singles' && <ImageSection form={form} set={set} removeImage={removeImage} />}
+            {form.type !== 'singles' && <ImageSection form={form} set={set} removeImage={removeImage} token={token} />}
 
             {/* Destacado / Nuevo */}
             <HStack spacing={6} gridColumn="1 / -1">
@@ -391,7 +530,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
                 onChange={setMeta}
                 onCardSelect={handleCardSelect}
               />
-              <ImageSection form={form} set={set} removeImage={removeImage} />
+              <ImageSection form={form} set={set} removeImage={removeImage} token={token} />
             </>
           )}
 
