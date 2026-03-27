@@ -5,7 +5,8 @@
       "Bash(npm run:*)",
       "Bash(ls /Users/bichous/Downloads/cardsSeekers/.env*)",
       "WebFetch(domain:justtcg.com)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:tcgtracking.com)"
     ]
   }
 }

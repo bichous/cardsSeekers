@@ -1,0 +1,263 @@
+{
+  "info": {
+    "_postman_id": "6de2d17c-52f1-4f90-bf89-6f8b8e3b3c12",
+    "name": "CardsSeekers - JustTCG",
+    "description": "Coleccion para consultar cartas en JustTCG desde Postman.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.justtcg.com/v1"
+    },
+    {
+      "key": "apiKey",
+      "value": ""
+    },
+    {
+      "key": "query",
+      "value": "Pikachu"
+    },
+    {
+      "key": "queryYugioh",
+      "value": "Blue-Eyes White Dragon"
+    },
+    {
+      "key": "queryOnePiece",
+      "value": "Monkey D. Luffy"
+    },
+    {
+      "key": "setPokemon",
+      "value": "pokemon-151"
+    },
+    {
+      "key": "setYugioh",
+      "value": "legend-of-blue-eyes-white-dragon"
+    },
+    {
+      "key": "setOnePiece",
+      "value": "romance-dawn"
+    }
+  ],
+  "item": [
+    {
+      "name": "Cards",
+      "item": [
+        {
+          "name": "Busqueda por carta",
+          "item": [
+        {
+          "name": "Buscar carta (Pokemon)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cards?q={{query}}&game=pokemon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cards"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{query}}"
+                },
+                {
+                  "key": "game",
+                  "value": "pokemon"
+                }
+              ]
+            },
+            "description": "Busca cartas por nombre/juego. Para Pokemon usa game=pokemon."
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar carta (Yu-Gi-Oh)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cards?q={{queryYugioh}}&game=yugioh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cards"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{queryYugioh}}"
+                },
+                {
+                  "key": "game",
+                  "value": "yugioh"
+                }
+              ]
+            },
+            "description": "Busca cartas de Yu-Gi-Oh por nombre."
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar carta (One Piece)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cards?q={{queryOnePiece}}&game=one-piece-card-game",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cards"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{queryOnePiece}}"
+                },
+                {
+                  "key": "game",
+                  "value": "one-piece-card-game"
+                }
+              ]
+            },
+            "description": "Busca cartas de One Piece por nombre."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Busqueda por set",
+      "item": [
+        {
+          "name": "Listar set (Pokemon)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cards?game=pokemon&set={{setPokemon}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cards"
+              ],
+              "query": [
+                {
+                  "key": "game",
+                  "value": "pokemon"
+                },
+                {
+                  "key": "set",
+                  "value": "{{setPokemon}}"
+                }
+              ]
+            },
+            "description": "Lista cartas del set indicado para Pokemon. Usa el slug del set en setPokemon."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar set (Yu-Gi-Oh)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cards?game=yugioh&set={{setYugioh}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cards"
+              ],
+              "query": [
+                {
+                  "key": "game",
+                  "value": "yugioh"
+                },
+                {
+                  "key": "set",
+                  "value": "{{setYugioh}}"
+                }
+              ]
+            },
+            "description": "Lista cartas del set indicado para Yu-Gi-Oh. Usa el slug del set en setYugioh."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar set (One Piece)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cards?game=one-piece-card-game&set={{setOnePiece}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cards"
+              ],
+              "query": [
+                {
+                  "key": "game",
+                  "value": "one-piece-card-game"
+                },
+                {
+                  "key": "set",
+                  "value": "{{setOnePiece}}"
+                }
+              ]
+            },
+            "description": "Lista cartas del set indicado para One Piece. Usa el slug del set en setOnePiece."
+          },
+          "response": []
+        }
+      ]
+    }
+      ]
+    }
+  ]
+}

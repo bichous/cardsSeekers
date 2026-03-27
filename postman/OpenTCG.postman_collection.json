@@ -1,0 +1,762 @@
+{
+  "info": {
+    "_postman_id": "8e839724-5b3b-4e77-aa1d-a2fbc86af8ea",
+    "name": "CardsSeekers - Open TCG API",
+    "description": "Coleccion para consultar Open TCG API (TCGTracking) desde Postman.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://tcgtracking.com/tcgapi/v1"
+    },
+    {
+      "key": "catPokemon",
+      "value": "3"
+    },
+    {
+      "key": "catYugioh",
+      "value": "2"
+    },
+    {
+      "key": "catOnePiece",
+      "value": ""
+    },
+    {
+      "key": "querySetPokemon",
+      "value": "MEW"
+    },
+    {
+      "key": "querySetYugioh",
+      "value": "Rage of the Abyss"
+    },
+    {
+      "key": "querySetOnePiece",
+      "value": "Romance Dawn"
+    },
+    {
+      "key": "setIdPokemon",
+      "value": "23237"
+    },
+    {
+      "key": "setIdYugioh",
+      "value": "23539"
+    },
+    {
+      "key": "setIdOnePiece",
+      "value": ""
+    },
+    {
+      "key": "cardNamePokemon",
+      "value": "poliwag"
+    },
+    {
+      "key": "cardNameYugioh",
+      "value": "Blue-Eyes White Dragon"
+    },
+    {
+      "key": "cardNameOnePiece",
+      "value": "Monkey D. Luffy"
+    }
+  ],
+  "item": [
+    {
+      "name": "Meta y categorias",
+      "item": [
+        {
+          "name": "Meta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/meta",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meta"
+              ]
+            },
+            "description": "Estado de la API, conteos globales y timestamps."
+          },
+          "response": []
+        },
+        {
+          "name": "Categorias",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "categories"
+              ]
+            },
+            "description": "Lista de juegos/categorias con su ID."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Busqueda de sets",
+      "item": [
+        {
+          "name": "Buscar set (Pokemon)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catPokemon}}/search?q={{querySetPokemon}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catPokemon}}",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{querySetPokemon}}"
+                }
+              ]
+            },
+            "description": "Busca sets de Pokemon por nombre/abreviatura."
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar set (Yu-Gi-Oh)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catYugioh}}/search?q={{querySetYugioh}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catYugioh}}",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{querySetYugioh}}"
+                }
+              ]
+            },
+            "description": "Busca sets de Yu-Gi-Oh por nombre/abreviatura."
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar set (One Piece)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catOnePiece}}/search?q={{querySetOnePiece}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catOnePiece}}",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{querySetOnePiece}}"
+                }
+              ]
+            },
+            "description": "Busca sets de One Piece. Primero completa catOnePiece con el ID correcto de categories."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Productos por set (cartas)",
+      "item": [
+        {
+          "name": "Listar cartas de set (Pokemon)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catPokemon}}/sets/{{setIdPokemon}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catPokemon}}",
+                "sets",
+                "{{setIdPokemon}}"
+              ]
+            },
+            "description": "Devuelve productos/cartas del set de Pokemon indicado."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar cartas de set (Yu-Gi-Oh)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catYugioh}}/sets/{{setIdYugioh}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catYugioh}}",
+                "sets",
+                "{{setIdYugioh}}"
+              ]
+            },
+            "description": "Devuelve productos/cartas del set de Yu-Gi-Oh indicado."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar cartas de set (One Piece)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catOnePiece}}/sets/{{setIdOnePiece}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catOnePiece}}",
+                "sets",
+                "{{setIdOnePiece}}"
+              ]
+            },
+            "description": "Devuelve productos/cartas del set de One Piece indicado. Completa catOnePiece y setIdOnePiece."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Carta individual por franquicia",
+      "item": [
+        {
+          "name": "Buscar carta individual (Pokemon)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "const query = (pm.collectionVariables.get('cardNamePokemon') || '').toLowerCase();",
+                  "const matches = (data?.products || []).filter(p => (p?.name || '').toLowerCase().includes(query) || (p?.clean_name || '').toLowerCase().includes(query));",
+                  "const compact = matches.map(m => ({ id: m.id, name: m.name, number: m.number, rarity: m.rarity, image_url: m.image_url }));",
+                  "pm.collectionVariables.set('matchesPokemon', JSON.stringify(compact));",
+                  "pm.test('Coincidencias encontradas', function () {",
+                  "  pm.expect(matches.length).to.be.above(0);",
+                  "});",
+                  "pm.visualizer.set(`",
+                  "<style>body{font-family:Inter,Arial,sans-serif;padding:12px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f5f5f5}</style>",
+                  "<h3>Coincidencias Pokemon ({{count}})</h3>",
+                  "<table><thead><tr><th>ID</th><th>Nombre</th><th>Numero</th><th>Rarity</th></tr></thead><tbody>{{#each items}}<tr><td>{{id}}</td><td>{{name}}</td><td>{{number}}</td><td>{{rarity}}</td></tr>{{/each}}</tbody></table>",
+                  "`, { count: compact.length, items: compact });",
+                  "console.log('matchesPokemon:', compact);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catPokemon}}/sets/{{setIdPokemon}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catPokemon}}",
+                "sets",
+                "{{setIdPokemon}}"
+              ]
+            },
+            "description": "Trae el set y filtra por nombre de carta en el script de Postman. Resultado guardado en matchesPokemon."
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar carta individual (Yu-Gi-Oh)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "const query = (pm.collectionVariables.get('cardNameYugioh') || '').toLowerCase();",
+                  "const matches = (data?.products || []).filter(p => (p?.name || '').toLowerCase().includes(query) || (p?.clean_name || '').toLowerCase().includes(query));",
+                  "const compact = matches.map(m => ({ id: m.id, name: m.name, number: m.number, rarity: m.rarity, image_url: m.image_url }));",
+                  "pm.collectionVariables.set('matchesYugioh', JSON.stringify(compact));",
+                  "pm.test('Coincidencias encontradas', function () {",
+                  "  pm.expect(matches.length).to.be.above(0);",
+                  "});",
+                  "pm.visualizer.set(`",
+                  "<style>body{font-family:Inter,Arial,sans-serif;padding:12px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f5f5f5}</style>",
+                  "<h3>Coincidencias Yu-Gi-Oh ({{count}})</h3>",
+                  "<table><thead><tr><th>ID</th><th>Nombre</th><th>Numero</th><th>Rarity</th></tr></thead><tbody>{{#each items}}<tr><td>{{id}}</td><td>{{name}}</td><td>{{number}}</td><td>{{rarity}}</td></tr>{{/each}}</tbody></table>",
+                  "`, { count: compact.length, items: compact });",
+                  "console.log('matchesYugioh:', compact);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catYugioh}}/sets/{{setIdYugioh}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catYugioh}}",
+                "sets",
+                "{{setIdYugioh}}"
+              ]
+            },
+            "description": "Trae el set y filtra por nombre de carta en el script de Postman. Resultado guardado en matchesYugioh."
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar carta individual (One Piece)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "const query = (pm.collectionVariables.get('cardNameOnePiece') || '').toLowerCase();",
+                  "const matches = (data?.products || []).filter(p => (p?.name || '').toLowerCase().includes(query) || (p?.clean_name || '').toLowerCase().includes(query));",
+                  "const compact = matches.map(m => ({ id: m.id, name: m.name, number: m.number, rarity: m.rarity, image_url: m.image_url }));",
+                  "pm.collectionVariables.set('matchesOnePiece', JSON.stringify(compact));",
+                  "pm.test('Coincidencias encontradas', function () {",
+                  "  pm.expect(matches.length).to.be.above(0);",
+                  "});",
+                  "pm.visualizer.set(`",
+                  "<style>body{font-family:Inter,Arial,sans-serif;padding:12px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f5f5f5}</style>",
+                  "<h3>Coincidencias One Piece ({{count}})</h3>",
+                  "<table><thead><tr><th>ID</th><th>Nombre</th><th>Numero</th><th>Rarity</th></tr></thead><tbody>{{#each items}}<tr><td>{{id}}</td><td>{{name}}</td><td>{{number}}</td><td>{{rarity}}</td></tr>{{/each}}</tbody></table>",
+                  "`, { count: compact.length, items: compact });",
+                  "console.log('matchesOnePiece:', compact);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catOnePiece}}/sets/{{setIdOnePiece}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catOnePiece}}",
+                "sets",
+                "{{setIdOnePiece}}"
+              ]
+            },
+            "description": "Trae el set y filtra por nombre de carta en el script de Postman. Resultado guardado en matchesOnePiece."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Flujo tipo JustTCG (por nombre)",
+      "item": [
+        {
+          "name": "1) Resolver set por nombre (Pokemon)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "const firstSet = data?.sets?.[0];",
+                  "pm.test('Hay al menos un set', function () {",
+                  "  pm.expect(firstSet).to.exist;",
+                  "});",
+                  "if (firstSet?.id) {",
+                  "  pm.collectionVariables.set('setIdPokemon', String(firstSet.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catPokemon}}/search?q={{cardNamePokemon}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catPokemon}}",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{cardNamePokemon}}"
+                }
+              ]
+            },
+            "description": "Busca sets relacionados con el nombre de carta y guarda el primer setIdPokemon."
+          },
+          "response": []
+        },
+        {
+          "name": "2) Buscar cartas por nombre (Pokemon)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "const query = (pm.collectionVariables.get('cardNamePokemon') || '').toLowerCase();",
+                  "const matches = (data?.products || []).filter(p => (p?.name || '').toLowerCase().includes(query));",
+                  "pm.collectionVariables.set('matchesPokemon', JSON.stringify(matches));",
+                  "pm.test('Se encontraron coincidencias', function () {",
+                  "  pm.expect(matches.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catPokemon}}/sets/{{setIdPokemon}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catPokemon}}",
+                "sets",
+                "{{setIdPokemon}}"
+              ]
+            },
+            "description": "Trae el set elegido y filtra por nombre de carta. Guarda resultado en matchesPokemon."
+          },
+          "response": []
+        },
+        {
+          "name": "1) Resolver set por nombre (Yu-Gi-Oh)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "const firstSet = data?.sets?.[0];",
+                  "pm.test('Hay al menos un set', function () {",
+                  "  pm.expect(firstSet).to.exist;",
+                  "});",
+                  "if (firstSet?.id) {",
+                  "  pm.collectionVariables.set('setIdYugioh', String(firstSet.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catYugioh}}/search?q={{cardNameYugioh}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catYugioh}}",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{cardNameYugioh}}"
+                }
+              ]
+            },
+            "description": "Busca sets relacionados con el nombre de carta y guarda el primer setIdYugioh."
+          },
+          "response": []
+        },
+        {
+          "name": "2) Buscar cartas por nombre (Yu-Gi-Oh)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "const query = (pm.collectionVariables.get('cardNameYugioh') || '').toLowerCase();",
+                  "const matches = (data?.products || []).filter(p => (p?.name || '').toLowerCase().includes(query));",
+                  "pm.collectionVariables.set('matchesYugioh', JSON.stringify(matches));",
+                  "pm.test('Se encontraron coincidencias', function () {",
+                  "  pm.expect(matches.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catYugioh}}/sets/{{setIdYugioh}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catYugioh}}",
+                "sets",
+                "{{setIdYugioh}}"
+              ]
+            },
+            "description": "Trae el set elegido y filtra por nombre de carta. Guarda resultado en matchesYugioh."
+          },
+          "response": []
+        },
+        {
+          "name": "1) Resolver set por nombre (One Piece)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "const firstSet = data?.sets?.[0];",
+                  "pm.test('Hay al menos un set', function () {",
+                  "  pm.expect(firstSet).to.exist;",
+                  "});",
+                  "if (firstSet?.id) {",
+                  "  pm.collectionVariables.set('setIdOnePiece', String(firstSet.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catOnePiece}}/search?q={{cardNameOnePiece}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catOnePiece}}",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{cardNameOnePiece}}"
+                }
+              ]
+            },
+            "description": "Busca sets relacionados con el nombre de carta y guarda el primer setIdOnePiece."
+          },
+          "response": []
+        },
+        {
+          "name": "2) Buscar cartas por nombre (One Piece)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "const query = (pm.collectionVariables.get('cardNameOnePiece') || '').toLowerCase();",
+                  "const matches = (data?.products || []).filter(p => (p?.name || '').toLowerCase().includes(query));",
+                  "pm.collectionVariables.set('matchesOnePiece', JSON.stringify(matches));",
+                  "pm.test('Se encontraron coincidencias', function () {",
+                  "  pm.expect(matches.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catOnePiece}}/sets/{{setIdOnePiece}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catOnePiece}}",
+                "sets",
+                "{{setIdOnePiece}}"
+              ]
+            },
+            "description": "Trae el set elegido y filtra por nombre de carta. Guarda resultado en matchesOnePiece."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pricing por set",
+      "item": [
+        {
+          "name": "Pricing set (Pokemon)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catPokemon}}/sets/{{setIdPokemon}}/pricing",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catPokemon}}",
+                "sets",
+                "{{setIdPokemon}}",
+                "pricing"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pricing set (Yu-Gi-Oh)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catYugioh}}/sets/{{setIdYugioh}}/pricing",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catYugioh}}",
+                "sets",
+                "{{setIdYugioh}}",
+                "pricing"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pricing set (One Piece)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catOnePiece}}/sets/{{setIdOnePiece}}/pricing",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catOnePiece}}",
+                "sets",
+                "{{setIdOnePiece}}",
+                "pricing"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "SKUs por set",
+      "item": [
+        {
+          "name": "SKUs set (Pokemon)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catPokemon}}/sets/{{setIdPokemon}}/skus",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catPokemon}}",
+                "sets",
+                "{{setIdPokemon}}",
+                "skus"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SKUs set (Yu-Gi-Oh)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catYugioh}}/sets/{{setIdYugioh}}/skus",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catYugioh}}",
+                "sets",
+                "{{setIdYugioh}}",
+                "skus"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SKUs set (One Piece)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{catOnePiece}}/sets/{{setIdOnePiece}}/skus",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{catOnePiece}}",
+                "sets",
+                "{{setIdOnePiece}}",
+                "skus"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
