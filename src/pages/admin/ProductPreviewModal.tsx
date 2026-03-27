@@ -59,6 +59,7 @@ function adminToProduct(p: AdminProduct): Product {
       productId: v.productId,
       language: v.language as Language,
       condition: (v.condition ?? 'NM') as CardCondition,
+      rarity: v.rarity,
       price: v.price,
       originalPrice: v.originalPrice,
       stock: v.stock,
@@ -85,6 +86,13 @@ export function ProductPreviewModal({ isOpen, onClose, product: adminProduct }: 
   const product = adminToProduct(adminProduct)
   const franchise = FRANCHISE_CONFIG[product.franchise]
   const isSingles = product.type === 'singles'
+  const isPokemonSingles = isSingles && product.franchise === 'pokemon'
+
+  // Unique rarities available — only for Pokémon singles
+  const availableRarities = isPokemonSingles
+    ? [...new Set(product.variants.map((v) => v.rarity).filter(Boolean))] as string[]
+    : []
+  const hasRarityVariants = availableRarities.length > 1
 
   const currentVariant = selectedVariant ?? product.variants[0]
   if (!currentVariant) return null
@@ -92,8 +100,10 @@ export function ProductPreviewModal({ isOpen, onClose, product: adminProduct }: 
   const languages = [...new Set(product.variants.map((v) => v.language))]
   const selectedLanguage = currentVariant.language
 
+  const selectedRarity = hasRarityVariants ? (currentVariant.rarity ?? availableRarities[0] ?? '') : ''
+
   const variantsForLanguage = product.variants
-    .filter((v) => v.language === selectedLanguage)
+    .filter((v) => v.language === selectedLanguage && (!hasRarityVariants || (v.rarity ?? '') === selectedRarity))
     .sort((a, b) => CONDITION_ORDER.indexOf(a.condition ?? 'NM') - CONDITION_ORDER.indexOf(b.condition ?? 'NM'))
 
   const availableConditions = isSingles
@@ -107,6 +117,14 @@ export function ProductPreviewModal({ isOpen, onClose, product: adminProduct }: 
       CONDITION_ORDER.map((c) =>
         product.variants.find((v) => v.language === lang && (v.condition ?? 'NM') === c)
       ).find(Boolean) ?? product.variants.find((v) => v.language === lang)
+    if (best) setSelectedVariant(best)
+  }
+
+  const handleRarityChange = (rarity: string) => {
+    const best =
+      CONDITION_ORDER.map((c) =>
+        product.variants.find((v) => v.rarity === rarity && v.language === selectedLanguage && (v.condition ?? 'NM') === c)
+      ).find(Boolean) ?? product.variants.find((v) => v.rarity === rarity)
     if (best) setSelectedVariant(best)
   }
 
@@ -192,6 +210,34 @@ export function ProductPreviewModal({ isOpen, onClose, product: adminProduct }: 
               <Heading fontFamily="body" fontSize={{ base: '18px', md: '24px' }} fontWeight={700} color="white" lineHeight={1.25}>
                 {product.name}
               </Heading>
+
+              {/* Rarity selector — Pokémon singles only */}
+              {hasRarityVariants && (
+                <VStack align="flex-start" spacing={2}>
+                  <Text fontSize="11px" color="gray.600" fontWeight={600} textTransform="uppercase" letterSpacing="0.08em">
+                    Rareza
+                  </Text>
+                  <HStack spacing={2} flexWrap="wrap">
+                    {availableRarities.map((rar) => {
+                      const allOut = product.variants.filter((v) => v.rarity === rar).every((v) => v.stock === 0)
+                      return (
+                        <Button
+                          key={rar}
+                          size="sm"
+                          variant={selectedRarity === rar ? 'primary' : 'outline_brand'}
+                          onClick={() => handleRarityChange(rar)}
+                          fontSize="12px"
+                          h="32px"
+                          px={4}
+                          opacity={allOut ? 0.4 : 1}
+                        >
+                          {rar}{allOut && ' (agotado)'}
+                        </Button>
+                      )
+                    })}
+                  </HStack>
+                </VStack>
+              )}
 
               {/* Language selector */}
               {languages.length > 1 && (
@@ -334,6 +380,11 @@ export function ProductPreviewModal({ isOpen, onClose, product: adminProduct }: 
                         {isSingles && (
                           <Badge bg="#1e1e1e" color="gray.500" fontSize="9px" px={1} borderRadius="sm">
                             {v.condition ?? 'NM'}
+                          </Badge>
+                        )}
+                        {isPokemonSingles && v.rarity && (
+                          <Badge bg="#1e1e1e" color="gray.500" fontSize="9px" px={1} borderRadius="sm">
+                            {v.rarity}
                           </Badge>
                         )}
                       </HStack>

@@ -49,9 +49,10 @@ router.post('/products', staffOrAdmin, async (req: AuthRequest, res) => {
         featured: Boolean(featured),
         isNew: Boolean(isNew),
         variants: {
-          create: variants.map((v: { language: string; condition?: string; price: number; originalPrice?: number; stock: number }) => ({
+          create: variants.map((v: { language: string; condition?: string; rarity?: string; price: number; originalPrice?: number; stock: number }) => ({
             language: v.language,
             condition: v.condition ?? 'NM',
+            rarity: v.rarity ?? '',
             price: Number(v.price),
             originalPrice: v.originalPrice ? Number(v.originalPrice) : null,
             stock: Number(v.stock ?? 0),
@@ -111,13 +112,14 @@ router.delete('/products/:id', requireRole('admin'), async (_req, res) => {
 // PUT /api/admin/products/:id/variants/:variantId
 router.put('/products/:id/variants/:variantId', staffOrAdmin, async (_req, res) => {
   const { variantId } = _req.params
-  const { price, originalPrice, stock, language, condition } = _req.body
+  const { price, originalPrice, stock, language, condition, rarity } = _req.body
   try {
     const variant = await prisma.productVariant.update({
       where: { id: variantId },
       data: {
         ...(condition !== undefined && { condition }),
         ...(language !== undefined && { language }),
+        ...(rarity !== undefined && { rarity }),
         ...(price !== undefined && { price: Number(price) }),
         ...(originalPrice !== undefined && { originalPrice: originalPrice ? Number(originalPrice) : null }),
         ...(stock !== undefined && { stock: Number(stock) }),
@@ -132,7 +134,7 @@ router.put('/products/:id/variants/:variantId', staffOrAdmin, async (_req, res) 
 // POST /api/admin/products/:id/variants
 router.post('/products/:id/variants', staffOrAdmin, async (req: AuthRequest, res) => {
   const { id } = req.params
-  const { language, condition, price, originalPrice, stock } = req.body
+  const { language, condition, rarity, price, originalPrice, stock } = req.body
   if (!language || price == null) {
     res.status(400).json({ error: 'language y price son requeridos' })
     return
@@ -143,6 +145,7 @@ router.post('/products/:id/variants', staffOrAdmin, async (req: AuthRequest, res
         productId: id,
         language,
         condition: condition ?? 'NM',
+        rarity: rarity ?? '',
         price: Number(price),
         originalPrice: originalPrice ? Number(originalPrice) : null,
         stock: Number(stock ?? 0),

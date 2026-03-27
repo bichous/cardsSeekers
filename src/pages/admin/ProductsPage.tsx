@@ -36,6 +36,7 @@ export interface AdminVariant {
   productId: string
   language: string
   condition?: string
+  rarity?: string
   price: number
   originalPrice?: number | null
   stock: number

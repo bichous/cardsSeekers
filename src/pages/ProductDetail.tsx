@@ -103,24 +103,27 @@ export function ProductDetail() {
   const { addToCart } = useCart()
   const [quantity, setQuantity] = useState(1)
   const [added, setAdded] = useState(false)
-  const [product, setProduct] = useState<Product | null>(() => getProductById(id ?? '') ?? null)
+  const [product, setProduct] = useState<Product | null>(null)
   const allProducts = useProducts()
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
-    product ? product.variants[0] : null
-  )
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
 
-  useEffect(() => { window.scrollTo(0, 0) }, [id])
-
-  // Si no está en mock, buscar en la BD
   useEffect(() => {
-    if (product) return
+    window.scrollTo(0, 0)
+    setProduct(null)
+    setSelectedVariant(null)
+    const mock = getProductById(id ?? '')
+    if (mock) {
+      setProduct(mock)
+      setSelectedVariant(mock.variants[0] ?? null)
+      return
+    }
     fetchProductById(id ?? '').then((p) => {
       if (p) {
         setProduct(p)
         setSelectedVariant(p.variants[0] ?? null)
       }
     })
-  }, [id, product])
+  }, [id])
 
   if (!product) {
     return (
@@ -140,14 +143,26 @@ export function ProductDetail() {
 
   const franchise = FRANCHISE_CONFIG[product.franchise]
   const isSingles = product.type === 'singles'
+  const isPokemonSingles = isSingles && product.franchise === 'pokemon'
 
-  // Unique languages available
-  const languages = [...new Set(product.variants.map((v) => v.language))]
+  // Finish/foil variants — only for Pokémon singles
+  const availableFinishes = isPokemonSingles
+    ? [...new Set(product.variants.map((v) => v.rarity).filter(Boolean))] as string[]
+    : []
+  const hasFinishVariants = availableFinishes.length > 1
+  const selectedFinish = hasFinishVariants ? ((selectedVariant ?? product.variants[0]).rarity ?? availableFinishes[0] ?? '') : ''
+
+  // Unique languages available (filtered by finish when applicable)
+  const languages = [...new Set(
+    product.variants
+      .filter((v) => !hasFinishVariants || (v.rarity ?? '') === selectedFinish)
+      .map((v) => v.language)
+  )]
   const selectedLanguage = (selectedVariant ?? product.variants[0]).language
 
-  // Variants for selected language, sorted by condition order
+  // Variants for selected language + finish, sorted by condition order
   const variantsForLanguage = product.variants
-    .filter((v) => v.language === selectedLanguage)
+    .filter((v) => v.language === selectedLanguage && (!hasFinishVariants || (v.rarity ?? '') === selectedFinish))
     .sort((a, b) => {
       const ai = CONDITION_ORDER.indexOf(a.condition ?? 'NM')
       const bi = CONDITION_ORDER.indexOf(b.condition ?? 'NM')
@@ -164,12 +179,19 @@ export function ProductDetail() {
   const stock = getStockLabel(variant.stock)
   const isOutOfStock = variant.stock === 0
 
-  const handleLanguageChange = (lang: string) => {
-    // Buscar mejor condición disponible (NM primero), fallback al primer variant del idioma
+  const handleFinishChange = (finish: string) => {
     const best =
       CONDITION_ORDER.map((c) =>
-        product.variants.find((v) => v.language === lang && (v.condition ?? 'NM') === c)
-      ).find(Boolean) ?? product.variants.find((v) => v.language === lang)
+        product.variants.find((v) => v.rarity === finish && v.language === selectedLanguage && (v.condition ?? 'NM') === c)
+      ).find(Boolean) ?? product.variants.find((v) => v.rarity === finish)
+    if (best) { setSelectedVariant(best); setQuantity(1) }
+  }
+
+  const handleLanguageChange = (lang: string) => {
+    const best =
+      CONDITION_ORDER.map((c) =>
+        product.variants.find((v) => v.language === lang && (v.condition ?? 'NM') === c && (!hasFinishVariants || (v.rarity ?? '') === selectedFinish))
+      ).find(Boolean) ?? product.variants.find((v) => v.language === lang && (!hasFinishVariants || (v.rarity ?? '') === selectedFinish))
     if (best) { setSelectedVariant(best); setQuantity(1) }
   }
 
@@ -307,6 +329,35 @@ export function ProductDetail() {
                 {product.name}
               </Heading>
             </Box>
+
+            {/* Finish / foil selector — Pokémon singles only */}
+            {hasFinishVariants && (
+              <VStack align="flex-start" spacing={2}>
+                <Text fontSize="11px" color="gray.600" fontWeight={600} textTransform="uppercase" letterSpacing="0.08em">
+                  Foil
+                </Text>
+                <HStack spacing={2} flexWrap="wrap">
+                  {availableFinishes.map((finish) => {
+                    const allOut = product.variants.filter((v) => v.rarity === finish).every((v) => v.stock === 0)
+                    return (
+                      <Button
+                        key={finish}
+                        size="sm"
+                        variant={selectedFinish === finish ? 'primary' : 'outline_brand'}
+                        onClick={() => handleFinishChange(finish)}
+                        fontSize="12px"
+                        h="32px"
+                        px={4}
+                        opacity={allOut ? 0.4 : 1}
+                        textTransform="capitalize"
+                      >
+                        {finish}{allOut && ' (agotado)'}
+                      </Button>
+                    )
+                  })}
+                </HStack>
+              </VStack>
+            )}
 
             {/* Language selector */}
             {languages.length > 1 && (

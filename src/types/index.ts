@@ -23,6 +23,7 @@ export interface ProductVariant {
   productId: string
   language: Language
   condition?: CardCondition  // 'NM' por defecto; obligatorio en singles
+  rarity?: string  // rareza — solo relevante en pokemon singles
   price: number
   originalPrice?: number | null
   stock: number
@@ -55,8 +56,9 @@ export function getMinVariant(product: Product): ProductVariant {
 }
 
 /** Clave única de un item en el carrito */
-export function cartKey(productId: string, language: string, condition?: string): string {
-  return condition ? `${productId}__${language}__${condition}` : `${productId}__${language}`
+export function cartKey(productId: string, language: string, condition?: string, rarity?: string): string {
+  const base = condition ? `${productId}__${language}__${condition}` : `${productId}__${language}`
+  return rarity ? `${base}__${rarity}` : base
 }
 
 export const FRANCHISE_CONFIG: Record<

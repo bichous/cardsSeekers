@@ -51,9 +51,14 @@ const TCG_BASE = 'https://tcgtracking.com/tcgapi/v1'
 const TCG_CAT: Record<string, number> = { yugioh: 2, pokemon: 3, onepiece: 68 }
 
 interface TCGSet { id: number; name: string; abbr?: string }
+interface TCGCardTrader {
+  finishes?: string[]
+  languages?: string[]
+}
 interface TCGProduct {
   id: number; name: string; set_name: string; set_abbr?: string
-  number?: string; rarity?: string; image_url?: string; finishes?: string[]
+  number?: string; rarity?: string; image_url?: string
+  cardtrader?: TCGCardTrader[]
 }
 
 async function searchTCGSets(query: string, catId: number): Promise<TCGSet[]> {
@@ -258,9 +263,11 @@ interface Props {
   meta: SinglesMeta
   onChange: (meta: SinglesMeta) => void
   onCardSelect?: (name: string, category: string, imageUrls: string[]) => void
+  onRaritiesDetected?: (rarities: string[]) => void
+  onFinishesDetected?: (finishes: string[]) => void
 }
 
-export function SinglesMetadataForm({ franchise, meta, onChange, onCardSelect }: Props) {
+export function SinglesMetadataForm({ franchise, meta, onChange, onCardSelect, onRaritiesDetected, onFinishesDetected }: Props) {
   const setField = (field: keyof SinglesMeta, value: string) => onChange({ ...meta, [field]: value })
 
   const catId = TCG_CAT[franchise]
@@ -413,7 +420,21 @@ export function SinglesMetadataForm({ franchise, meta, onChange, onCardSelect }:
       const product = result.raw as TCGProduct
       // selectedSet siempre existe cuando source === 'card'
       const setName = selectedSet!.name
-      setVariantPrintings([...new Set((product.finishes ?? []).filter(Boolean))])
+      // Detectar múltiples rarezas de la misma carta en el pool
+      const cleanBaseName = product.name.replace(/\s*-\s*\d+(?:\/\d+)?\s*$/, '').trim()
+      const sameNameProducts = cardPool.filter(p =>
+        p.name.replace(/\s*-\s*\d+(?:\/\d+)?\s*$/, '').trim() === cleanBaseName
+      )
+      const poolRarities = [...new Set(sameNameProducts.map(p => p.rarity).filter(Boolean))] as string[]
+
+      const finishes = [...new Set((product.cardtrader?.[0]?.finishes ?? []).filter(Boolean))]
+      onFinishesDetected?.(finishes)
+      if (franchise === 'pokemon' && poolRarities.length > 1) {
+        setVariantPrintings(poolRarities)
+        onRaritiesDetected?.(poolRarities)
+      } else {
+        setVariantPrintings(finishes)
+      }
       updated = mapTCGTracking(product, franchise, meta, setName)
       // product.name ya incluye el número (ej: "Team Rocket's Mewtwo ex - 240/182")
       // así que el nombre del producto es: "{product.name} - {setName}"

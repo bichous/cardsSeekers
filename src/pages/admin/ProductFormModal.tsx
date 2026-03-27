@@ -240,6 +240,7 @@ interface VariantForm {
   id?: string
   language: string
   condition: string
+  rarity: string
   price: string
   originalPrice: string
   stock: string
@@ -266,6 +267,7 @@ const EMPTY_FORM = {
 const EMPTY_VARIANT: VariantForm = {
   language: 'español',
   condition: 'NM',
+  rarity: '',
   price: '',
   originalPrice: '',
   stock: '0',
@@ -280,6 +282,8 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
   const [variants, setVariants] = useState<VariantForm[]>([{ ...EMPTY_VARIANT }])
   const [meta, setMeta] = useState<SinglesMeta>({})
   const [saving, setSaving] = useState(false)
+  const [availableRarities, setAvailableRarities] = useState<string[]>([])
+  const [availableFinishes, setAvailableFinishes] = useState<string[]>([])
 
   useEffect(() => {
     if (product) {
@@ -308,6 +312,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
           id: v.id,
           language: v.language,
           condition: v.condition ?? 'NM',
+          rarity: v.rarity ?? '',
           price: String(v.price),
           originalPrice: v.originalPrice ? String(v.originalPrice) : '',
           stock: String(v.stock),
@@ -329,6 +334,14 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
     if (imageUrls.length > 0) set('images', imageUrls.join('\n'))
   }
 
+  const handleRaritiesDetected = (rarities: string[]) => {
+    setAvailableRarities(rarities)
+  }
+
+  const handleFinishesDetected = (finishes: string[]) => {
+    setAvailableFinishes(finishes)
+  }
+
   const removeImage = (index: number) => {
     const lines = form.images.split('\n').filter(Boolean)
     lines.splice(index, 1)
@@ -340,13 +353,28 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
 
   const addVariant = () => {
     if (form.type === 'singles') {
-      // Para singles la unicidad es (idioma, condición) — buscar el primer combo libre
-      const usedCombos = new Set(variants.map((v) => `${v.language}__${v.condition}`))
-      for (const lang of LANGUAGES) {
-        for (const cond of CONDITIONS) {
-          if (!usedCombos.has(`${lang}__${cond}`)) {
-            setVariants((prev) => [...prev, { ...EMPTY_VARIANT, language: lang, condition: cond }])
-            return
+      if (form.franchise === 'pokemon') {
+        // For Pokémon singles: uniqueness is (language, condition, rarity)
+        const usedCombos = new Set(variants.map((v) => `${v.language}__${v.condition}__${v.rarity}`))
+        for (const lang of LANGUAGES) {
+          for (const cond of CONDITIONS) {
+            for (const rar of (availableRarities.length > 0 ? availableRarities : [''])) {
+              if (!usedCombos.has(`${lang}__${cond}__${rar}`)) {
+                setVariants((prev) => [...prev, { ...EMPTY_VARIANT, language: lang, condition: cond, rarity: rar }])
+                return
+              }
+            }
+          }
+        }
+      } else {
+        // Non-Pokémon singles: uniqueness is (language, condition)
+        const usedCombos = new Set(variants.map((v) => `${v.language}__${v.condition}`))
+        for (const lang of LANGUAGES) {
+          for (const cond of CONDITIONS) {
+            if (!usedCombos.has(`${lang}__${cond}`)) {
+              setVariants((prev) => [...prev, { ...EMPTY_VARIANT, language: lang, condition: cond }])
+              return
+            }
           }
         }
       }
@@ -375,6 +403,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
       id: v.id,
       language: v.language,
       condition: v.condition,
+      rarity: v.rarity,
       price: parseFloat(v.price),
       originalPrice: v.originalPrice ? parseFloat(v.originalPrice) : null,
       stock: parseInt(v.stock),
@@ -529,6 +558,8 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
                 meta={meta}
                 onChange={setMeta}
                 onCardSelect={handleCardSelect}
+                onRaritiesDetected={handleRaritiesDetected}
+                onFinishesDetected={handleFinishesDetected}
               />
               <ImageSection form={form} set={set} removeImage={removeImage} token={token} />
             </>
@@ -538,7 +569,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
           <Divider borderColor="#1e1e1e" my={5} />
           <HStack justify="space-between" mb={3}>
             <Text fontSize="12px" color="gray.500" fontWeight={600} textTransform="uppercase" letterSpacing="0.1em">
-              Variantes por idioma
+              {form.franchise === 'pokemon' && form.type === 'singles' ? 'Variantes por idioma / foil' : 'Variantes por idioma'}
             </Text>
             <Button
               size="xs" leftIcon={<FiPlus size={11} />} variant="ghost"
@@ -546,7 +577,9 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
               onClick={addVariant}
               isDisabled={
                 form.type === 'singles'
-                  ? variants.length >= LANGUAGES.length * CONDITIONS.length
+                  ? form.franchise === 'pokemon'
+                    ? variants.length >= LANGUAGES.length * CONDITIONS.length * Math.max(1, availableRarities.length)
+                    : variants.length >= LANGUAGES.length * CONDITIONS.length
                   : variants.length >= LANGUAGES.length
               }
             >
@@ -570,8 +603,11 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
                           value={l}
                           disabled={
                             form.type === 'singles'
-                              // Singles: bloquear solo si el combo (idioma+condición) ya existe
-                              ? variants.some((vv, ii) => ii !== i && vv.language === l && vv.condition === v.condition)
+                              ? form.franchise === 'pokemon'
+                                // Pokémon singles: bloquear solo si el combo (idioma+condición+foil) ya existe
+                                ? variants.some((vv, ii) => ii !== i && vv.language === l && vv.condition === v.condition && vv.rarity === v.rarity)
+                                // Otros singles: bloquear solo si el combo (idioma+condición) ya existe
+                                : variants.some((vv, ii) => ii !== i && vv.language === l && vv.condition === v.condition)
                               // Sealed: bloquear si el idioma ya está usado
                               : variants.some((vv, ii) => ii !== i && vv.language === l)
                           }
@@ -589,13 +625,40 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
                           <option
                             key={c}
                             value={c}
-                            disabled={variants.some((vv, ii) => ii !== i && vv.language === v.language && vv.condition === c)}
+                            disabled={
+                              form.franchise === 'pokemon'
+                                ? variants.some((vv, ii) => ii !== i && vv.language === v.language && vv.condition === c && vv.rarity === v.rarity)
+                                : variants.some((vv, ii) => ii !== i && vv.language === v.language && vv.condition === c)
+                            }
                           >
                             {c}
                           </option>
                         ))}
                       </Select>
                     )}
+                    {form.type === 'singles' && form.franchise === 'pokemon' && (() => {
+                      const options = availableRarities.length > 0 ? availableRarities : availableFinishes
+                      return options.length > 0 ? (
+                        <Select
+                          size="sm" maxW="200px" bg="#111111" borderColor="#2a2a2a" color="white"
+                          value={v.rarity} onChange={(e) => setVariant(i, 'rarity', e.target.value)}
+                        >
+                          {options.map((r) => (
+                            <option key={r} value={r}
+                              disabled={variants.some((vv, ii) => ii !== i && vv.language === v.language && vv.condition === v.condition && vv.rarity === r)}
+                            >
+                              {r}
+                            </option>
+                          ))}
+                        </Select>
+                      ) : (
+                        <Input
+                          size="sm" maxW="160px" bg="#111111" borderColor="#2a2a2a" color="white"
+                          placeholder="Foil" value={v.rarity}
+                          onChange={(e) => setVariant(i, 'rarity', e.target.value)}
+                        />
+                      )
+                    })()}
                   </HStack>
                   {variants.length > 1 && (
                     <IconButton

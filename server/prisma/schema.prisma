@@ -96,11 +96,12 @@ model ProductVariant {
   productId     String
   language      String  // "español" | "inglés" | "japonés" | "portugués"
   condition     String  @default("NM") // "NM" | "LP" | "MP" | "HP" | "Damaged" — solo relevante en singles
+  rarity        String  @default("")  // rareza — solo relevante en pokemon singles
   price         Float
   originalPrice Float?
   stock         Int     @default(0)
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@unique([productId, language, condition])
+  @@unique([productId, language, condition, rarity])
 }
