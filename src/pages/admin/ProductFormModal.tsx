@@ -492,6 +492,11 @@ export function ProductFormModal({ isOpen, onClose, product, onSaved }: Props) {
                 <option value="pokemon">Pokémon</option>
                 <option value="yugioh">Yu-Gi-Oh!</option>
                 <option value="onepiece">One Piece</option>
+                <option value="digimon">Digimon</option>
+                <option value="gundam">Gundam</option>
+                <option value="magicthegathering">Magic: The Gathering</option>
+                <option value="dragonballsuper">Dragon Ball Super</option>
+                <option value="finalfantasy">Final Fantasy</option>
               </Select>
             </FormControl>
             <FormControl>

@@ -1,4 +1,12 @@
-export type Franchise = 'pokemon' | 'yugioh' | 'onepiece'
+export type Franchise =
+  | 'pokemon'
+  | 'yugioh'
+  | 'onepiece'
+  | 'digimon'
+  | 'gundam'
+  | 'magicthegathering'
+  | 'dragonballsuper'
+  | 'finalfantasy'
 
 export type ProductType = 'sealed' | 'singles'
 
@@ -85,6 +93,41 @@ export const FRANCHISE_CONFIG: Record<
     textColor: '#ffffff',
     gradient: 'linear(to-br, #FF6B00, #CC2200)',
     emoji: '⚓',
+  },
+  digimon: {
+    label: 'Digimon',
+    color: '#0099FF',
+    textColor: '#ffffff',
+    gradient: 'linear(to-br, #00BFFF, #0066CC)',
+    emoji: '🦖',
+  },
+  gundam: {
+    label: 'Gundam',
+    color: '#D32F2F',
+    textColor: '#ffffff',
+    gradient: 'linear(to-br, #EF5350, #C62828)',
+    emoji: '🤖',
+  },
+  magicthegathering: {
+    label: 'Magic: The Gathering',
+    color: '#FFA726',
+    textColor: '#0d0d0d',
+    gradient: 'linear(to-br, #FFB74D, #FF9800)',
+    emoji: '🔮',
+  },
+  dragonballsuper: {
+    label: 'Dragon Ball Super',
+    color: '#FF5722',
+    textColor: '#ffffff',
+    gradient: 'linear(to-br, #FF6F40, #E64A19)',
+    emoji: '🐉',
+  },
+  finalfantasy: {
+    label: 'Final Fantasy',
+    color: '#673AB7',
+    textColor: '#ffffff',
+    gradient: 'linear(to-br, #7E57C2, #5E35B1)',
+    emoji: '⚔️',
   },
 }
 

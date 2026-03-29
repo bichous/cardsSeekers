@@ -108,6 +108,16 @@ export function Footer() {
               <Text fontWeight={600} fontSize="12px" color="gray.400" textTransform="uppercase" letterSpacing="0.1em">
                 Info
               </Text>
+              <ChakraLink
+                as={Link}
+                to="/order-lookup"
+                fontSize="13px"
+                color="gray.500"
+                _hover={{ color: 'brand.400' }}
+                transition="color 0.2s"
+              >
+                Consultar Orden
+              </ChakraLink>
               {['Sobre nosotros', 'Envíos', 'Devoluciones', 'Contacto'].map((label) => (
                 <ChakraLink
                   key={label}

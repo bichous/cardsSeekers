@@ -30,11 +30,31 @@ const FRANCHISE_CARDS: { id: Franchise; description: string }[] = [
     id: 'onepiece',
     description: 'Mazos de inicio, booster boxes y las rarezas más buscadas.',
   },
+  {
+    id: 'digimon',
+    description: 'Starter Decks, Booster Boxes y cartas alternativas de Digimon Card Game.',
+  },
+  {
+    id: 'gundam',
+    description: 'Kits de modelos, cartas de Gundam War y productos exclusivos.',
+  },
+  {
+    id: 'magicthegathering',
+    description: 'Commander Decks, Set Boosters, Bundles y singles del formato.',
+  },
+  {
+    id: 'dragonballsuper',
+    description: 'Starter Decks, Booster Boxes y cartas Super Rare de DBS Card Game.',
+  },
+  {
+    id: 'finalfantasy',
+    description: 'Starter Sets, Opus Collections y cartas premium de FF TCG.',
+  },
 ]
 
 const STATS = [
   { value: '+500', label: 'Productos' },
-  { value: '3', label: 'Franquicias' },
+  { value: '8', label: 'Franquicias' },
   { value: '24h', label: 'Envío express' },
   { value: '100%', label: 'Originales' },
 ]
@@ -124,8 +144,8 @@ export function Home() {
                 maxW="460px"
                 lineHeight={1.7}
               >
-                Pokémon, Yu-Gi-Oh! y One Piece. Productos sellados, cartas sueltas y
-                colecciones exclusivas. Envío en 24 horas.
+                Pokémon, Yu-Gi-Oh!, One Piece, Digimon, Magic: The Gathering y más.
+                Productos sellados, cartas sueltas y colecciones exclusivas. Envío en 24 horas.
               </Text>
 
               <HStack spacing={3} flexWrap="wrap">
@@ -169,7 +189,7 @@ export function Home() {
 
             {/* Right side – decorative franchise badges */}
             <Box display={{ base: 'none', lg: 'block' }} position="relative" h="400px">
-              {FRANCHISE_CARDS.map((fc, i) => {
+              {FRANCHISE_CARDS.slice(0, 3).map((fc, i) => {
                 const cfg = FRANCHISE_CONFIG[fc.id]
                 const offsets = [
                   { top: '0', left: '60px' },

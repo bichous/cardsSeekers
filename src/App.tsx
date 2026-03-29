@@ -15,6 +15,7 @@ import { ProductDetail } from './pages/ProductDetail'
 import { CartPage } from './pages/CartPage'
 import { CheckoutPage } from './pages/CheckoutPage'
 import { LoginPage } from './pages/LoginPage'
+import { OrderLookupPage } from './pages/OrderLookupPage'
 import { Box } from '@chakra-ui/react'
 
 function AdminRoutes() {
@@ -44,6 +45,7 @@ function StoreRoutes() {
           <Route path="/carrito" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/order-lookup" element={<OrderLookupPage />} />
         </Routes>
       </Box>
       <Footer />

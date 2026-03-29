@@ -275,9 +275,9 @@ export function CheckoutPage() {
   const handlePayment = async () => {
     setStep('processing')
 
-    // Guardar datos del usuario si está autenticado y el formulario era válido
-    if (user && token) {
-      try {
+    try {
+      // Si está autenticado, guardar datos del usuario
+      if (user && token) {
         await updateUser({
           nombre: form.nombre || undefined,
           apellidos: form.apellidos || undefined,
@@ -293,29 +293,41 @@ export function CheckoutPage() {
             estado: cpData?.estado ?? null,
           } : undefined,
         })
-
-        // Registrar pedido en la base de datos
-        await fetch(`${API_URL}/api/orders`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            total: orderTotal,
-            items: state.items.map((item) => ({
-              productId: item.product.id,
-              productName: item.product.name,
-              productImage: item.product.images[0] ?? null,
-              quantity: item.quantity,
-              price: item.product.price,
-            })),
-          }),
-        })
-      } catch {
-        // No bloquear el flujo si falla el guardado
-        console.error('No se pudieron guardar los datos del usuario/pedido')
       }
+
+      // Registrar pedido en la base de datos (autenticado o guest)
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+
+      await fetch(`${API_URL}/api/orders`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          total: orderTotal,
+          items: state.items.map((item) => ({
+            productId: item.product.id,
+            productName: item.product.name,
+            productImage: item.product.images[0] ?? null,
+            quantity: item.quantity,
+            price: item.product.price,
+          })),
+          // Si no está autenticado, enviar datos guest
+          ...(!user && {
+            guest: {
+              email: form.email,
+              name: `${form.nombre} ${form.apellidos}`,
+              phone: form.telefono,
+            },
+          }),
+        }),
+      })
+    } catch (error) {
+      console.error('Error creando pedido:', error)
+      // No bloquear el flujo si falla el guardado
     }
 
     // TODO: llamar a POST /api/checkout/preference y redirigir a initPoint
@@ -490,6 +502,23 @@ export function CheckoutPage() {
                 const e = submitted ? getErrors() : {} as ReturnType<typeof getErrors>
 
               return (<>
+
+              {/* Info para usuarios no autenticados */}
+              {!user && (
+                <Alert
+                  status="info"
+                  bg="rgba(0, 153, 255, 0.08)"
+                  border="1px solid"
+                  borderColor="rgba(0, 153, 255, 0.2)"
+                  borderRadius="lg"
+                >
+                  <AlertIcon color="cyan.400" />
+                  <AlertDescription fontSize="13px" color="gray.300">
+                    No necesitas crear una cuenta. Completa el formulario con tus datos y podrás realizar tu compra como invitado.
+                    Te enviaremos un email con los detalles de tu pedido.
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {/* Datos de contacto */}
               <VStack align="stretch" spacing={4}>
